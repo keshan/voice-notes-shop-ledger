@@ -24,7 +24,6 @@ image = (
         "pydantic>=2.9,<3",
         "faster-whisper>=1.1,<2",
     )
-    .add_local_dir("shop_ledger", remote_path="/root/shop_ledger")
     .env(
         {
             "PYTHONPATH": "/root",
@@ -33,6 +32,7 @@ image = (
             "WHISPER_MODEL_SIZE": "tiny",
         }
     )
+    .add_local_dir("shop_ledger", remote_path="/root/shop_ledger")
 )
 
 
@@ -76,10 +76,7 @@ class LedgerAgent:
         return result.model_dump(mode="json")
 
 
-web_image = image.add_local_file("app.py", remote_path="/root/app.py")
-
-
-@app.function(image=web_image, max_containers=1, timeout=600)
+@app.function(image=image, max_containers=1, timeout=600)
 @modal.concurrent(max_inputs=50)
 @modal.asgi_app()
 def fastapi_app():
