@@ -32,7 +32,7 @@ for a real person who keeps money notes in scraps, voice messages, or memory.
 - Review field intelligence: top category, most active party, biggest entry,
   watch-list risks, and a daily field note.
 - Use the automation queue to turn due items into follow-up actions, reminder
-  cadence, and ready-to-send message scripts.
+  cadence, and ready-to-send polite, friendly, or firm message scripts.
 - Export the ledger as CSV.
 - Run with a heuristic dev fallback before downloading a large GGUF model.
 
@@ -130,7 +130,8 @@ not as a hosted inference API.
 2. Show the clean ledger row.
 3. Open the dashboard and point to net cash, due amount, and the graph the app
    chose for the current ledger.
-4. Open the automation queue and copy a follow-up script.
+4. Open the automation queue and choose a polite, friendly, or firm follow-up
+   script.
 5. Export the CSV.
 
 ## More Docs

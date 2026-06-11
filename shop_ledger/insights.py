@@ -109,6 +109,7 @@ def followup_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
         currency = row.get("currency") or primary_currency(rows)
         item = row.get("item") or "ledger item"
         reminder = row.get("reminder") or f"Follow up with {who} about {money(value, currency)}."
+        variants = reply_variants(who, value, currency, item)
         queue.append(
             {
                 "priority": "High" if value >= 5000 else "Normal",
@@ -117,11 +118,23 @@ def followup_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "item": item,
                 "next_action": reminder,
                 "cadence": "Today, then every 2 days" if value >= 5000 else "Tomorrow",
-                "script": f"Hi {who}, just checking on {money(value, currency)} for {item}. Can you confirm when it will be settled?",
+                "script": variants["polite"],
+                "polite_script": variants["polite"],
+                "friendly_script": variants["friendly"],
+                "firm_script": variants["firm"],
                 "source_row": index,
             }
         )
     return sorted(queue, key=lambda row: (row["priority"] != "High", row["counterparty"]))
+
+
+def reply_variants(who: str, value: float, currency: str, item: str) -> dict[str, str]:
+    amount_text = money(value, currency)
+    return {
+        "polite": f"Hi {who}, just checking on {amount_text} for {item}. Can you confirm when it will be settled?",
+        "friendly": f"Hi {who}, quick reminder from the shop ledger: {amount_text} is still open for {item}. Tell me what works for you.",
+        "firm": f"Hi {who}, {amount_text} for {item} is still pending. Please settle it today or send a clear payment time.",
+    }
 
 
 def category_breakdown(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -304,7 +317,11 @@ def build_reminder_markdown(rows: list[dict[str, Any]]) -> str:
             f"<strong>{item['priority']} · {item['counterparty']} · {item['amount']}</strong>"
             f"<p>{item['next_action']}</p>"
             f"<small>Cadence: {item['cadence']}</small>"
-            f"<code>{item['script']}</code>"
+            "<div class='reply-grid'>"
+            f"<code><span>Polite</span>{item['polite_script']}</code>"
+            f"<code><span>Friendly</span>{item['friendly_script']}</code>"
+            f"<code><span>Firm</span>{item['firm_script']}</code>"
+            "</div>"
             "</div>"
         )
     return "\n".join(cards)

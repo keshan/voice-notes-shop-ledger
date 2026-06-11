@@ -28,7 +28,8 @@ The current version also adds a dashboard and automation queue:
   dues, expenses, cashflow, confidence review, or category mix.
 - Category and counterparty breakdowns.
 - Risk flags for high-value dues and low-confidence extraction.
-- Ready-to-send follow-up scripts with suggested cadence.
+- Ready-to-send follow-up scripts with suggested cadence and three tones:
+  polite, friendly, and firm.
 
 ## Small Model Fit
 
@@ -49,7 +50,7 @@ when the schema is narrow and the UI keeps the workflow grounded.
 2. Click "Add to ledger".
 3. Show clean rows and totals.
 4. Open the dashboard and show due amount, the chosen graph, and risk flags.
-5. Open the automation queue and copy a follow-up script.
+5. Open the automation queue and pick the right tone for a follow-up script.
 6. Export CSV.
 
 ## Lessons

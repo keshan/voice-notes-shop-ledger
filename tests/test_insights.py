@@ -41,6 +41,10 @@ class InsightTests(unittest.TestCase):
 
         self.assertEqual(queue[0]["priority"], "High")
         self.assertIn("Nimal", queue[0]["script"])
+        self.assertIn("polite_script", queue[0])
+        self.assertIn("friendly_script", queue[0])
+        self.assertIn("firm_script", queue[0])
+        self.assertIn("settle", queue[0]["firm_script"])
 
     def test_risk_flags_include_high_value_due(self):
         flags = risk_flags(ROWS)

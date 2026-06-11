@@ -134,6 +134,7 @@ the reason.
 - Plotly figures for due radar, spend pressure, cashflow, confidence review,
   category mix, and party exposure
 - follow-up queue with cadence and scripts
+- reply studio variants for polite, friendly, and firm reminders
 - daily field note
 
 The chart planner is deterministic first. It asks what matters most right now:
@@ -158,7 +159,8 @@ Tabs:
 
 - `Dashboard`: KPIs, chart director, dynamic Plotly graphs, field
   intelligence, category and party breakdowns.
-- `Automation Queue`: follow-up actions, reminder cadence, message scripts.
+- `Automation Queue`: follow-up actions, reminder cadence, and reply studio
+  message variants.
 - `Ledger`: raw ledger rows and CSV export.
 
 ## Modal Production Path
@@ -197,6 +199,7 @@ Current tests cover:
 - chart-plan selection
 - Plotly figure generation
 - follow-up queue priority
+- reply studio message variants
 - risk flags
 
 Run:

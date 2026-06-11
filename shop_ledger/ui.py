@@ -238,12 +238,28 @@ button.primary {
 .followup-card code {
   display: block;
   white-space: normal;
-  margin-top: 8px;
   color: var(--ledger-green);
   background: rgba(139, 220, 139, 0.08);
   border: 1px solid rgba(139, 220, 139, 0.22);
   border-radius: 6px;
   padding: 8px;
+}
+
+.reply-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.reply-grid code span {
+  display: block;
+  color: var(--ledger-gold) !important;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  text-transform: uppercase;
 }
 
 #dashboard-panel,
@@ -261,6 +277,10 @@ button.primary {
   }
 
   .command-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .reply-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -354,9 +374,20 @@ def build_demo(process_fn: ProcessFn | None = None) -> gr.Blocks:
             with gr.Tab("Automation Queue"):
                 automation = gr.Markdown(build_reminder_markdown([]), elem_id="automation-panel")
                 automation_table = gr.Dataframe(
-                    headers=["priority", "counterparty", "amount", "item", "next_action", "cadence", "script", "source_row"],
-                    datatype=["str", "str", "str", "str", "str", "str", "str", "number"],
-                    label="Follow-up actions",
+                    headers=[
+                        "priority",
+                        "counterparty",
+                        "amount",
+                        "item",
+                        "next_action",
+                        "cadence",
+                        "polite_script",
+                        "friendly_script",
+                        "firm_script",
+                        "source_row",
+                    ],
+                    datatype=["str", "str", "str", "str", "str", "str", "str", "str", "str", "number"],
+                    label="Reply studio",
                     interactive=False,
                     wrap=True,
                 )
@@ -625,7 +656,18 @@ def render_intelligence(rows: list[dict[str, Any]]) -> tuple[Any, ...]:
         pd.DataFrame(parties, columns=["party", "total", "due"]),
         pd.DataFrame(
             followups,
-            columns=["priority", "counterparty", "amount", "item", "next_action", "cadence", "script", "source_row"],
+            columns=[
+                "priority",
+                "counterparty",
+                "amount",
+                "item",
+                "next_action",
+                "cadence",
+                "polite_script",
+                "friendly_script",
+                "firm_script",
+                "source_row",
+            ],
         ),
     )
 

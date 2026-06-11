@@ -62,14 +62,17 @@ Keep this local/off-grid by using the same GGUF model.
 
 ### 4. Voice Reply Studio
 
+Status: shipped in the second enhancement sprint.
+
 For every due item, generate three reply styles:
 
 - polite
 - firm
 - friendly/local
 
-The user can copy the script into WhatsApp or SMS. This is very demoable and
-directly useful.
+The automation queue now generates polite, friendly, and firm scripts for each
+due item. The user can copy the right tone into WhatsApp or SMS. This is very
+demoable and directly useful.
 
 ### 5. Mistake Review Mode
 
