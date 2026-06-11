@@ -8,6 +8,8 @@ import modal
 APP_NAME = "voice-notes-shop-ledger"
 MODEL_DIR = "/models"
 DEFAULT_MODEL_FILE = "model.gguf"
+DEFAULT_GGUF_REPO = "unsloth/gemma-4-12b-it-GGUF"
+DEFAULT_GGUF_FILE = "gemma-4-12b-it-UD-Q4_K_XL.gguf"
 
 app = modal.App(APP_NAME)
 volume = modal.Volume.from_name("voice-notes-shop-ledger-models", create_if_missing=True)
@@ -36,8 +38,8 @@ image = (
 )
 
 
-@app.function(image=image, volumes={MODEL_DIR: volume}, timeout=1800)
-def download_model(repo_id: str, filename: str = DEFAULT_MODEL_FILE) -> str:
+@app.function(image=image, volumes={MODEL_DIR: volume}, timeout=3600)
+def download_model(repo_id: str = DEFAULT_GGUF_REPO, filename: str = DEFAULT_GGUF_FILE) -> str:
     """Download a GGUF model from Hugging Face into a persistent Modal volume."""
     from huggingface_hub import hf_hub_download
 
@@ -76,6 +78,26 @@ class LedgerAgent:
         return result.model_dump(mode="json")
 
 
+@app.function(image=image, volumes={MODEL_DIR: volume}, cpu=8, memory=32768, timeout=900)
+def smoke_test_model() -> dict:
+    """Run a sample ledger extraction inside Modal and return model metadata."""
+    from shop_ledger.processor import LedgerProcessor
+
+    volume.reload()
+    processor = LedgerProcessor.from_env()
+    result = processor.process(
+        "paid Ravi 1200 for rice bags, customer Nimal owes 750 for tea packets",
+        currency="LKR",
+    )
+    return {
+        "model_used": result.model_used,
+        "entry_count": len(result.entries),
+        "amounts": [entry.amount for entry in result.entries],
+        "statuses": [entry.payment_status for entry in result.entries],
+        "questions": result.questions,
+    }
+
+
 @app.function(image=image, max_containers=1, timeout=600)
 @modal.concurrent(max_inputs=50)
 @modal.asgi_app()
@@ -94,8 +116,5 @@ def fastapi_app():
 
 
 @app.local_entrypoint()
-def main(repo_id: str = "", filename: str = DEFAULT_MODEL_FILE) -> None:
-    if repo_id:
-        print(download_model.remote(repo_id, filename))
-    else:
-        print("No repo_id supplied. Deploying will use heuristic fallback until a GGUF is downloaded.")
+def main(repo_id: str = DEFAULT_GGUF_REPO, filename: str = DEFAULT_GGUF_FILE) -> None:
+    print(download_model.remote(repo_id, filename))

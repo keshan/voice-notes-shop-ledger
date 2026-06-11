@@ -54,7 +54,7 @@ By default the app runs in `mock` mode. Set `LEDGER_MODEL_MODE=llama` and point
 
 ```bash
 export LEDGER_MODEL_MODE=llama
-export LLAMA_GGUF_PATH=/path/to/gemma-4-12b-it-q4_k_m.gguf
+export LLAMA_GGUF_PATH=/path/to/gemma-4-12b-it-UD-Q4_K_XL.gguf
 python app.py
 ```
 
@@ -67,9 +67,7 @@ Short version:
 ```bash
 pip install modal
 modal setup
-modal run modal_app.py::download_model \
-  --repo-id YOUR_GGUF_REPO \
-  --filename YOUR_MODEL_FILE.gguf
+modal run modal_app.py::download_model
 modal deploy modal_app.py
 ```
 
@@ -79,16 +77,14 @@ The app reads these environment variables:
 | --- | --- |
 | `LEDGER_MODEL_MODE` | `mock` or `llama` |
 | `LLAMA_GGUF_PATH` | Local path to a GGUF model |
-| `GGUF_MODEL_REPO` | Hugging Face repo for Modal model download |
-| `GGUF_MODEL_FILE` | GGUF filename inside that repo |
 | `WHISPER_MODEL_SIZE` | Optional faster-whisper model size, defaults to `tiny` |
 
 ## Model Notes
 
-The intended model family is a Gemma 12B-class instruction model quantized as
-GGUF and run through llama.cpp. If using Gemma 4 12B, choose or publish a GGUF
-quantization such as Q4_K_M/Q5_K_M and set `GGUF_MODEL_REPO` and
-`GGUF_MODEL_FILE` accordingly.
+The configured Modal model is
+[`unsloth/gemma-4-12b-it-GGUF`](https://huggingface.co/unsloth/gemma-4-12b-it-GGUF)
+with `gemma-4-12b-it-UD-Q4_K_XL.gguf`. The model card lists Gemma 4 12B
+Unified at 11.95B parameters, which is inside the hackathon's <=32B constraint.
 
 The implementation deliberately avoids external LLM APIs so the demo can earn
 the local-first/off-grid spirit of the hackathon. Modal is used for deployment,

@@ -78,26 +78,20 @@ class LlamaLedgerBackend:
         self.load()
         assert self._llm is not None
 
-        prompt = self._format_prompt(note, currency)
-        response = self._llm(
-            prompt,
+        response = self._llm.create_chat_completion(
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": f"Currency: {currency}\nNote:\n{note}"},
+            ],
             max_tokens=900,
             temperature=0.1,
             top_p=0.9,
-            stop=["</json>", "<end_of_turn>"],
         )
-        text = response["choices"][0]["text"]
+        text = response["choices"][0]["message"]["content"]
         data = parse_json_object(text)
         result = LedgerResult.model_validate(data)
         result.model_used = Path(self.model_path).name
         return result
-
-    def _format_prompt(self, note: str, currency: str) -> str:
-        return (
-            "<start_of_turn>user\n"
-            f"{SYSTEM_PROMPT}\n\nCurrency: {currency}\nNote:\n{note}\n"
-            "<end_of_turn>\n<start_of_turn>model\n<json>\n"
-        )
 
 
 def parse_json_object(text: str) -> dict[str, Any]:

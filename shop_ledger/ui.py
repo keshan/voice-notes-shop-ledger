@@ -3,7 +3,6 @@ from __future__ import annotations
 import csv
 import tempfile
 from collections.abc import Callable
-from pathlib import Path
 from typing import Any
 
 import gradio as gr
@@ -37,27 +36,57 @@ EXAMPLES = [
 
 CSS = """
 :root {
-  --ledger-ink: #1f2933;
-  --ledger-muted: #697386;
-  --ledger-paper: #fffaf0;
-  --ledger-green: #2f6f4e;
-  --ledger-gold: #c9892b;
-  --ledger-red: #a84632;
+  --ledger-bg: #090b0f;
+  --ledger-panel: #10151d;
+  --ledger-panel-2: #151b25;
+  --ledger-line: rgba(157, 177, 154, 0.22);
+  --ledger-ink: #f3f4ec;
+  --ledger-muted: #a8b3a5;
+  --ledger-green: #8bdc8b;
+  --ledger-gold: #e6b450;
+  --ledger-red: #ff7a68;
+  --ledger-blue: #8ab4ff;
 }
 
 .gradio-container {
-  background: linear-gradient(180deg, #f7f2e8 0%, #eef4ed 100%);
+  background:
+    radial-gradient(circle at 18% 0%, rgba(139, 220, 139, 0.16), transparent 28%),
+    linear-gradient(180deg, #090b0f 0%, #11171f 54%, #0c1015 100%);
+  color: var(--ledger-ink) !important;
+}
+
+.gradio-container .block,
+.gradio-container .form,
+.gradio-container .panel {
+  background: var(--ledger-panel) !important;
+  border-color: var(--ledger-line) !important;
+}
+
+.gradio-container textarea,
+.gradio-container input,
+.gradio-container select {
+  background: #0b1017 !important;
+  color: var(--ledger-ink) !important;
+  border-color: var(--ledger-line) !important;
+}
+
+.gradio-container label,
+.gradio-container .wrap,
+.gradio-container .prose,
+.gradio-container p,
+.gradio-container span {
   color: var(--ledger-ink);
 }
 
 #hero {
-  padding: 18px 0 4px;
+  padding: 22px 0 8px;
 }
 
 #hero h1 {
-  font-size: 34px;
+  font-size: 38px;
   line-height: 1.08;
   margin-bottom: 8px;
+  color: var(--ledger-ink);
 }
 
 #hero p {
@@ -67,18 +96,57 @@ CSS = """
 }
 
 #status-strip {
-  border: 1px solid rgba(47, 111, 78, 0.22);
-  background: rgba(255, 250, 240, 0.72);
+  border: 1px solid var(--ledger-line);
+  background: rgba(16, 21, 29, 0.8);
   border-radius: 8px;
+  padding: 8px 12px;
+}
+
+#input-dock,
+#output-dock {
+  border: 1px solid var(--ledger-line);
+  background: rgba(16, 21, 29, 0.86);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+#input-notice {
+  min-height: 42px;
+  border-left: 4px solid var(--ledger-gold);
+  background: rgba(230, 180, 80, 0.1);
+  border-radius: 6px;
   padding: 10px 12px;
 }
 
 .summary-card {
   border-left: 4px solid var(--ledger-green);
+  background: rgba(139, 220, 139, 0.08);
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.reminder-card {
+  border-left: 4px solid var(--ledger-blue);
+  background: rgba(138, 180, 255, 0.08);
+  border-radius: 6px;
+  padding: 12px;
 }
 
 button.primary {
   border-radius: 8px !important;
+  background: linear-gradient(180deg, #92e693 0%, #5fbf73 100%) !important;
+  color: #07100b !important;
+  border: 0 !important;
+  font-weight: 700 !important;
+}
+
+#ledger-table {
+  border: 1px solid var(--ledger-line);
+  border-radius: 8px;
+}
+
+#download-box {
+  min-height: 70px;
 }
 """
 
@@ -101,7 +169,7 @@ def build_demo(process_fn: ProcessFn | None = None) -> gr.Blocks:
         gr.Markdown(
             """
             # Voice Notes to Shop Ledger
-            Turn messy shop notes into ledger rows, totals, and reminders.
+            A midnight ledger desk for turning rough shop notes into rows, totals, and follow-ups.
             """,
             elem_id="hero",
         )
@@ -111,13 +179,20 @@ def build_demo(process_fn: ProcessFn | None = None) -> gr.Blocks:
             row_count = gr.Markdown("Rows: 0")
 
         with gr.Row():
-            with gr.Column(scale=5):
+            with gr.Column(scale=5, elem_id="input-dock"):
                 note_box = gr.Textbox(
-                    label="Paste a note",
+                    label="Written note",
                     placeholder="paid Ravi 1200 for rice bags, customer Nimal owes 750 for tea packets",
                     lines=6,
                 )
-                audio_box = gr.Audio(label="Or record/upload a voice note", sources=["microphone", "upload"], type="filepath")
+                audio_box = gr.Audio(label="Voice note", sources=["microphone", "upload"], type="filepath")
+                input_choice = gr.Radio(
+                    label="Input to analyze",
+                    choices=["Auto", "Text note", "Voice note"],
+                    value="Auto",
+                    interactive=True,
+                )
+                input_notice = gr.Markdown("Ready for one note.", elem_id="input-notice")
                 with gr.Row():
                     currency = gr.Dropdown(
                         label="Currency",
@@ -127,9 +202,9 @@ def build_demo(process_fn: ProcessFn | None = None) -> gr.Blocks:
                     )
                     add_button = gr.Button("Add to ledger", variant="primary")
                     clear_button = gr.Button("Clear")
-            with gr.Column(scale=4):
+            with gr.Column(scale=4, elem_id="output-dock"):
                 summary = gr.Markdown("No ledger rows yet.", elem_classes=["summary-card"])
-                reminders = gr.Markdown("No reminders yet.")
+                reminders = gr.Markdown("No reminders yet.", elem_classes=["reminder-card"])
 
         ledger = gr.Dataframe(
             headers=COLUMNS,
@@ -137,8 +212,9 @@ def build_demo(process_fn: ProcessFn | None = None) -> gr.Blocks:
             label="Ledger",
             interactive=False,
             wrap=True,
+            elem_id="ledger-table",
         )
-        download = gr.File(label="Download CSV")
+        download = gr.File(label="Download CSV", elem_id="download-box")
 
         gr.Examples(
             examples=EXAMPLES,
@@ -147,19 +223,44 @@ def build_demo(process_fn: ProcessFn | None = None) -> gr.Blocks:
         )
 
         add_button.click(
-            fn=lambda note, audio, currency_value, state: add_to_ledger(
+            fn=lambda note, audio, source_choice, currency_value, state: add_to_ledger(
                 note,
                 audio,
+                source_choice,
                 currency_value,
                 state,
                 active_process,
             ),
-            inputs=[note_box, audio_box, currency, ledger_state],
-            outputs=[ledger, summary, reminders, model_badge, row_count, download, ledger_state],
+            inputs=[note_box, audio_box, input_choice, currency, ledger_state],
+            outputs=[
+                ledger,
+                summary,
+                reminders,
+                model_badge,
+                row_count,
+                download,
+                ledger_state,
+                note_box,
+                audio_box,
+                input_choice,
+                input_notice,
+            ],
         )
         clear_button.click(
             fn=clear_ledger,
-            outputs=[ledger, summary, reminders, model_badge, row_count, download, ledger_state],
+            outputs=[
+                ledger,
+                summary,
+                reminders,
+                model_badge,
+                row_count,
+                download,
+                ledger_state,
+                note_box,
+                audio_box,
+                input_choice,
+                input_notice,
+            ],
         )
 
     return demo
@@ -168,17 +269,62 @@ def build_demo(process_fn: ProcessFn | None = None) -> gr.Blocks:
 def add_to_ledger(
     note: str,
     audio_path: str | None,
+    source_choice: str,
     currency: str,
     state: list[dict[str, Any]] | None,
     process_fn: ProcessFn,
-) -> tuple[pd.DataFrame, str, str, str, str, str | None, list[dict[str, Any]]]:
-    combined_note = note.strip() if note else ""
-    transcript = transcribe_audio(audio_path)
-    if transcript:
-        combined_note = f"{combined_note}\n{transcript}".strip()
+) -> tuple[
+    pd.DataFrame,
+    str,
+    str,
+    str,
+    str,
+    str | None,
+    list[dict[str, Any]],
+    Any,
+    Any,
+    Any,
+    str,
+]:
+    rows = state or []
+    choice = choose_input(note, audio_path, source_choice)
+    if choice["status"] != "ready":
+        frame = pd.DataFrame(rows, columns=COLUMNS)
+        return (
+            frame,
+            build_summary(rows, {}),
+            build_reminders(rows, {}),
+            "Model: waiting for input",
+            f"Rows: {len(rows)}",
+            write_csv(rows) if rows else None,
+            rows,
+            gr.update(),
+            gr.update(),
+            gr.update(),
+            choice["notice"],
+        )
+
+    if choice["source"] == "audio":
+        combined_note = transcribe_audio(audio_path)
+        if not combined_note:
+            frame = pd.DataFrame(rows, columns=COLUMNS)
+            return (
+                frame,
+                build_summary(rows, {}),
+                build_reminders(rows, {}),
+                "Model: waiting for audio transcript",
+                f"Rows: {len(rows)}",
+                write_csv(rows) if rows else None,
+                rows,
+                gr.update(),
+                gr.update(),
+                gr.update(value="Voice note"),
+                "I could not transcribe that voice note. Try another recording or paste the note.",
+            )
+    else:
+        combined_note = (note or "").strip()
 
     result = process_fn(combined_note, currency or "LKR")
-    rows = state or []
     rows = rows + compact_rows(result.get("entries", []))
 
     frame = pd.DataFrame(rows, columns=COLUMNS)
@@ -186,6 +332,9 @@ def add_to_ledger(
     reminder_text = build_reminders(rows, result)
     csv_path = write_csv(rows) if rows else None
     model = result.get("model_used", "unknown")
+    notice = f"Added {len(result.get('entries', []))} row(s) from the {choice['label'].lower()}."
+    next_note = gr.update(value="") if choice["source"] == "text" else gr.update()
+    next_audio = gr.update(value=None) if choice["source"] == "audio" else gr.update()
 
     return (
         frame,
@@ -195,7 +344,32 @@ def add_to_ledger(
         f"Rows: {len(rows)}",
         csv_path,
         rows,
+        next_note,
+        next_audio,
+        gr.update(value="Auto"),
+        notice,
     )
+
+
+def choose_input(note: str | None, audio_path: str | None, source_choice: str | None) -> dict[str, str]:
+    has_text = bool((note or "").strip())
+    has_audio = bool(audio_path)
+    choice = source_choice or "Auto"
+
+    if has_text and has_audio and choice == "Auto":
+        return {
+            "status": "conflict",
+            "notice": "Both a written note and a voice note are present. Choose Text note or Voice note, then add it to the ledger.",
+        }
+    if choice == "Text note" and not has_text:
+        return {"status": "missing", "notice": "Text note is selected, but the written note is empty."}
+    if choice == "Voice note" and not has_audio:
+        return {"status": "missing", "notice": "Voice note is selected, but no audio is attached."}
+    if not has_text and not has_audio:
+        return {"status": "missing", "notice": "Add a written note or record a voice note first."}
+    if choice == "Voice note" or (choice == "Auto" and has_audio):
+        return {"status": "ready", "source": "audio", "label": "Voice note"}
+    return {"status": "ready", "source": "text", "label": "Text note"}
 
 
 def compact_rows(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -270,7 +444,19 @@ def write_csv(rows: list[dict[str, Any]]) -> str:
     return handle.name
 
 
-def clear_ledger() -> tuple[pd.DataFrame, str, str, str, str, None, list[dict[str, Any]]]:
+def clear_ledger() -> tuple[
+    pd.DataFrame,
+    str,
+    str,
+    str,
+    str,
+    None,
+    list[dict[str, Any]],
+    str,
+    None,
+    str,
+    str,
+]:
     return (
         pd.DataFrame([], columns=COLUMNS),
         "No ledger rows yet.",
@@ -279,4 +465,8 @@ def clear_ledger() -> tuple[pd.DataFrame, str, str, str, str, None, list[dict[st
         "Rows: 0",
         None,
         [],
+        "",
+        None,
+        "Auto",
+        "Ready for one note.",
     )

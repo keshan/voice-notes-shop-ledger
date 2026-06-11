@@ -11,29 +11,24 @@ pip install modal
 modal setup
 ```
 
-## 2. Choose A GGUF Model
+## 2. Download The GGUF Model
 
-Use a GGUF quantization of a <=32B model. For the hackathon target, use a Gemma
-12B-class instruction model when a suitable GGUF is available.
+The default Modal download uses:
 
-The app does not hard-code a community quant because filenames change often.
-Pass your chosen repo and filename when downloading:
+- Repo: `unsloth/gemma-4-12b-it-GGUF`
+- File: `gemma-4-12b-it-UD-Q4_K_XL.gguf`
+
+```bash
+modal run modal_app.py::download_model
+```
+
+To override the model, pass a different repo and filename:
 
 ```bash
 modal run modal_app.py::download_model \
-  --repo-id YOUR_GGUF_REPO \
-  --filename YOUR_MODEL_FILE.gguf
+  --repo-id another/repo \
+  --filename another-model.gguf
 ```
-
-Examples of the shape you want:
-
-```text
-repo-id:  your-name/gemma-4-12B-it-GGUF
-filename: gemma-4-12B-it-Q4_K_M.gguf
-```
-
-If you are iterating before the GGUF is ready, skip the download and deploy in
-mock mode. The UI and ledger workflow will still run.
 
 ## 3. Deploy The App
 
