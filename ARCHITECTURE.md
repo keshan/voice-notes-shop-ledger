@@ -66,6 +66,7 @@ Dashboard, ledger table, automation queue, CSV export
    - dynamic insight graph plan
    - daily shop-pulse brief
    - local ledger question answer
+   - shop pulse timeline
    - Plotly insight figures
    - automation queue
    - review queue
@@ -141,6 +142,7 @@ the reason.
 - chart plan selection
 - daily brief generation with Gemma or local fallback
 - Ask My Ledger answers from structured rows with Gemma or local fallback
+- timeline events and pulse chart
 - Plotly figures for due radar, spend pressure, cashflow, confidence review,
   category mix, and party exposure
 - follow-up queue with cadence and scripts
@@ -176,6 +178,7 @@ Tabs:
   message variants.
 - `Review Desk`: low-confidence or incomplete rows with targeted correction
   questions.
+- `Pulse Timeline`: story cards, event chart, and timeline table.
 - `Ledger`: raw ledger rows and CSV export.
 
 ## Modal Production Path

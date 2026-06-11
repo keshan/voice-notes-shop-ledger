@@ -16,7 +16,10 @@ from shop_ledger.insights import (
     build_insights_markdown,
     build_reminder_markdown,
     build_review_markdown,
+    build_timeline_markdown,
     build_tables,
+    timeline_figure,
+    timeline_rows,
 )
 from shop_ledger.processor import LedgerProcessor, prepare_document_input, transcribe_audio
 
@@ -261,6 +264,40 @@ button.primary {
   padding: 8px;
 }
 
+.timeline-rail {
+  border-left: 1px solid var(--ledger-line);
+  margin-left: 10px;
+  padding-left: 14px;
+}
+
+.timeline-card {
+  background: rgba(8, 12, 18, 0.88);
+  border: 1px solid var(--ledger-line);
+  border-left: 4px solid var(--ledger-blue);
+  border-radius: 8px;
+  margin: 10px 0;
+  padding: 12px;
+}
+
+.timeline-card.income {
+  border-left-color: var(--ledger-green);
+}
+
+.timeline-card.expense {
+  border-left-color: var(--ledger-red);
+}
+
+.timeline-card.due {
+  border-left-color: var(--ledger-gold);
+}
+
+.timeline-card code {
+  color: var(--ledger-muted);
+  background: rgba(157, 177, 154, 0.08);
+  border-radius: 6px;
+  padding: 5px 7px;
+}
+
 .followup-card code {
   display: block;
   white-space: normal;
@@ -293,6 +330,7 @@ button.primary {
 #review-panel,
 #daily-brief-panel,
 #ask-ledger-panel,
+#timeline-panel,
 #insight-panel {
   border: 1px solid var(--ledger-line);
   background: rgba(16, 21, 29, 0.86);
@@ -460,6 +498,27 @@ def build_demo(
                     interactive=False,
                     wrap=True,
                 )
+            with gr.Tab("Pulse Timeline"):
+                timeline = gr.Markdown(build_timeline_markdown([]), elem_id="timeline-panel")
+                timeline_plot = gr.Plot(value=timeline_figure([]), label="Shop pulse")
+                timeline_table = gr.Dataframe(
+                    headers=[
+                        "source_row",
+                        "date",
+                        "badge",
+                        "direction",
+                        "counterparty",
+                        "item",
+                        "amount",
+                        "signed_amount",
+                        "status",
+                        "story",
+                    ],
+                    datatype=["number", "str", "str", "str", "str", "str", "str", "number", "str", "str"],
+                    label="Timeline events",
+                    interactive=False,
+                    wrap=True,
+                )
             with gr.Tab("Ledger"):
                 ledger = gr.Dataframe(
                     headers=COLUMNS,
@@ -514,6 +573,9 @@ def build_demo(
                 automation_table,
                 review,
                 review_table,
+                timeline,
+                timeline_plot,
+                timeline_table,
             ],
         )
         clear_button.click(
@@ -544,6 +606,9 @@ def build_demo(
                 automation_table,
                 review,
                 review_table,
+                timeline,
+                timeline_plot,
+                timeline_table,
             ],
         )
         daily_brief_button.click(
@@ -817,6 +882,23 @@ def render_intelligence(rows: list[dict[str, Any]]) -> tuple[Any, ...]:
         pd.DataFrame(
             reviews,
             columns=["source_row", "issue", "confidence", "counterparty", "item", "amount", "question"],
+        ),
+        build_timeline_markdown(rows),
+        timeline_figure(rows),
+        pd.DataFrame(
+            timeline_rows(rows),
+            columns=[
+                "source_row",
+                "date",
+                "badge",
+                "direction",
+                "counterparty",
+                "item",
+                "amount",
+                "signed_amount",
+                "status",
+                "story",
+            ],
         ),
     )
 

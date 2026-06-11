@@ -34,6 +34,8 @@ for a real person who keeps money notes in scraps, voice messages, or memory.
 - Generate a Gemma-powered "today's shop pulse" from the structured ledger rows.
 - Ask local ledger questions such as "Who owes me most?", "What should I follow
   up today?", and "Where did cash go?"
+- View a Shop Pulse Timeline that turns rows into a visual story of cash in,
+  cash out, dues, and logged events.
 - Review field intelligence: top category, most active party, biggest entry,
   watch-list risks, and a daily field note.
 - Use the automation queue to turn due items into follow-up actions, reminder
@@ -142,10 +144,11 @@ not as a hosted inference API.
 3. Open the dashboard and point to net cash, due amount, the chosen graph, and
    the generated daily brief.
 4. Ask "Who owes me most?" and show the structured answer.
-5. Open the automation queue and choose a polite, friendly, or firm follow-up
+5. Open the Pulse Timeline and show the day becoming a sequence of events.
+6. Open the automation queue and choose a polite, friendly, or firm follow-up
    script.
-6. Open the Review Desk to show how uncertain rows are handled.
-7. Export the CSV.
+7. Open the Review Desk to show how uncertain rows are handled.
+8. Export the CSV.
 
 ## More Docs
 

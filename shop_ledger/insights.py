@@ -450,6 +450,89 @@ def build_review_markdown(rows: list[dict[str, Any]]) -> str:
     return "\n".join(cards)
 
 
+def timeline_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    events = []
+    currency = primary_currency(rows)
+    for index, row in enumerate(rows, start=1):
+        value = amount(row)
+        direction = row.get("direction") or "unknown"
+        status = row.get("payment_status") or "unknown"
+        party = row.get("counterparty") or "Unknown"
+        item = row.get("item") or "ledger item"
+        signed = value
+        if direction == "expense":
+            signed = -value
+        elif status == "due":
+            signed = 0
+        badge = "Cash in" if direction == "income" and status == "paid" else "Cash out" if direction == "expense" else "Due" if status == "due" else "Logged"
+        story = f"{badge}: {party} · {item} · {money(value, currency)}"
+        events.append(
+            {
+                "source_row": index,
+                "date": str(row.get("date") or date.today().isoformat()),
+                "badge": badge,
+                "direction": direction,
+                "counterparty": party,
+                "item": item,
+                "amount": money(value, currency),
+                "signed_amount": signed,
+                "status": status,
+                "story": story,
+            }
+        )
+    return sorted(events, key=lambda event: (parse_row_date(event["date"]), event["source_row"]))
+
+
+def build_timeline_markdown(rows: list[dict[str, Any]]) -> str:
+    events = timeline_rows(rows)
+    if not events:
+        return "### Shop Pulse Timeline\nThe day's story appears after the first ledger entry."
+
+    cards = ["### Shop Pulse Timeline", "<div class='timeline-rail'>"]
+    for event in events[:12]:
+        tone = "income" if event["direction"] == "income" else "expense" if event["direction"] == "expense" else "due"
+        cards.append(
+            f"<div class='timeline-card {tone}'>"
+            f"<strong>Row {event['source_row']} · {event['badge']} · {event['date']}</strong>"
+            f"<p>{event['counterparty']} · {event['item']}</p>"
+            f"<code>{event['amount']} · {event['status']}</code>"
+            "</div>"
+        )
+    cards.append("</div>")
+    return "\n".join(cards)
+
+
+def timeline_figure(rows: list[dict[str, Any]]) -> go.Figure:
+    events = timeline_rows(rows)
+    figure = base_figure("Shop pulse timeline", "Rows become the story of the day")
+    if not events:
+        return empty_figure()
+
+    labels = [f"Row {event['source_row']}" for event in events]
+    values = [event["signed_amount"] for event in events]
+    colors = [
+        PALETTE["green"] if event["direction"] == "income" and event["status"] == "paid"
+        else PALETTE["red"] if event["direction"] == "expense"
+        else PALETTE["gold"] if event["status"] == "due"
+        else PALETTE["blue"]
+        for event in events
+    ]
+    hover = [event["story"] for event in events]
+    figure.add_trace(
+        go.Bar(
+            x=labels,
+            y=values,
+            marker={"color": colors},
+            text=[event["badge"] for event in events],
+            textposition="auto",
+            hovertext=hover,
+            hovertemplate="%{hovertext}<extra></extra>",
+        )
+    )
+    figure.add_hline(y=0, line_color=PALETTE["grid"])
+    return figure
+
+
 def build_tables(
     rows: list[dict[str, Any]],
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:

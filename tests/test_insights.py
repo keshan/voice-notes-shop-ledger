@@ -5,11 +5,14 @@ from shop_ledger.insights import (
     build_chart_plan,
     build_daily_brief_markdown,
     build_insight_figures,
+    build_timeline_markdown,
     compute_metrics,
     daily_brief_fallback,
     followup_rows,
     review_rows,
     risk_flags,
+    timeline_figure,
+    timeline_rows,
 )
 
 
@@ -115,6 +118,20 @@ class InsightTests(unittest.TestCase):
         answer = answer_ledger_question(ROWS, "Where did cash go?")
 
         self.assertIn("inventory", answer)
+
+    def test_timeline_rows_turn_entries_into_story_events(self):
+        events = timeline_rows(ROWS)
+
+        self.assertEqual(events[0]["source_row"], 1)
+        self.assertIn("Ravi", events[0]["story"])
+        self.assertEqual(events[1]["badge"], "Due")
+
+    def test_timeline_markdown_and_figure_render(self):
+        markdown = build_timeline_markdown(ROWS)
+        figure = timeline_figure(ROWS)
+
+        self.assertIn("Shop Pulse Timeline", markdown)
+        self.assertTrue(hasattr(figure, "to_plotly_json"))
 
 
 if __name__ == "__main__":

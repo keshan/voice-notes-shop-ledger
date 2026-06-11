@@ -96,6 +96,8 @@ editable and write corrections back into session state.
 
 ### 6. Shop Pulse Timeline
 
+Status: shipped in the Pulse Timeline enhancement sprint.
+
 Convert the ledger into a visual day timeline:
 
 ```text
@@ -105,7 +107,9 @@ Convert the ledger into a visual day timeline:
 17:30 utility bill
 ```
 
-This makes messy notes feel like a story of the day.
+The app now includes a Pulse Timeline tab with story cards, a Plotly pulse
+chart, and a structured event table. This makes messy notes feel like a story
+of the day.
 
 ### 7. Counterparty Memory Cards
 
