@@ -20,6 +20,14 @@ paid Ravi 1200 for rice bags, customer Nimal owes 750 for tea packets, remind me
 
 into ledger rows, totals, and follow-up reminders.
 
+The current version also adds a dashboard and automation queue:
+
+- Net cash, cash in, cash out, due amount, open follow-ups, and average
+  extraction confidence.
+- Category and counterparty breakdowns.
+- Risk flags for high-value dues and low-confidence extraction.
+- Ready-to-send follow-up scripts with suggested cadence.
+
 ## Small Model Fit
 
 This is a structured extraction and rewriting task. A 12B-class model is enough
@@ -38,8 +46,9 @@ when the schema is narrow and the UI keeps the workflow grounded.
 1. Show the messy note or voice note.
 2. Click "Add to ledger".
 3. Show clean rows and totals.
-4. Show a reminder generated from an unpaid item.
-5. Export CSV.
+4. Open the dashboard and show due amount plus risk flags.
+5. Open the automation queue and copy a follow-up script.
+6. Export CSV.
 
 ## Lessons
 

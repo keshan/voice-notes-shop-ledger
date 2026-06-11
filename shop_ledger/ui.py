@@ -8,6 +8,12 @@ from typing import Any
 import gradio as gr
 import pandas as pd
 
+from shop_ledger.insights import (
+    build_dashboard_markdown,
+    build_insights_markdown,
+    build_reminder_markdown,
+    build_tables,
+)
 from shop_ledger.processor import LedgerProcessor, transcribe_audio
 
 
@@ -148,6 +154,69 @@ button.primary {
 #download-box {
   min-height: 70px;
 }
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.metric-card {
+  background: rgba(8, 12, 18, 0.88);
+  border: 1px solid var(--ledger-line);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.metric-card span {
+  display: block;
+  color: var(--ledger-muted) !important;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.metric-card strong {
+  display: block;
+  color: var(--ledger-green);
+  font-size: 22px;
+  margin-top: 6px;
+}
+
+.followup-card {
+  background: rgba(8, 12, 18, 0.88);
+  border: 1px solid var(--ledger-line);
+  border-left: 4px solid var(--ledger-gold);
+  border-radius: 8px;
+  margin: 10px 0;
+  padding: 12px;
+}
+
+.followup-card code {
+  display: block;
+  white-space: normal;
+  margin-top: 8px;
+  color: var(--ledger-green);
+  background: rgba(139, 220, 139, 0.08);
+  border: 1px solid rgba(139, 220, 139, 0.22);
+  border-radius: 6px;
+  padding: 8px;
+}
+
+#dashboard-panel,
+#automation-panel,
+#insight-panel {
+  border: 1px solid var(--ledger-line);
+  background: rgba(16, 21, 29, 0.86);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+@media (max-width: 760px) {
+  .metric-grid {
+    grid-template-columns: 1fr;
+  }
+}
 """
 
 
@@ -206,15 +275,44 @@ def build_demo(process_fn: ProcessFn | None = None) -> gr.Blocks:
                 summary = gr.Markdown("No ledger rows yet.", elem_classes=["summary-card"])
                 reminders = gr.Markdown("No reminders yet.", elem_classes=["reminder-card"])
 
-        ledger = gr.Dataframe(
-            headers=COLUMNS,
-            datatype=["str"] * len(COLUMNS),
-            label="Ledger",
-            interactive=False,
-            wrap=True,
-            elem_id="ledger-table",
-        )
-        download = gr.File(label="Download CSV", elem_id="download-box")
+        with gr.Tabs():
+            with gr.Tab("Dashboard"):
+                dashboard = gr.Markdown(build_dashboard_markdown([]), elem_id="dashboard-panel")
+                insights = gr.Markdown(build_insights_markdown([]), elem_id="insight-panel")
+                with gr.Row():
+                    category_table = gr.Dataframe(
+                        headers=["category", "total", "display"],
+                        datatype=["str", "number", "str"],
+                        label="Category heatmap",
+                        interactive=False,
+                        wrap=True,
+                    )
+                    party_table = gr.Dataframe(
+                        headers=["party", "total", "due"],
+                        datatype=["str", "str", "str"],
+                        label="People and suppliers",
+                        interactive=False,
+                        wrap=True,
+                    )
+            with gr.Tab("Automation Queue"):
+                automation = gr.Markdown(build_reminder_markdown([]), elem_id="automation-panel")
+                automation_table = gr.Dataframe(
+                    headers=["priority", "counterparty", "amount", "item", "next_action", "cadence", "script", "source_row"],
+                    datatype=["str", "str", "str", "str", "str", "str", "str", "number"],
+                    label="Follow-up actions",
+                    interactive=False,
+                    wrap=True,
+                )
+            with gr.Tab("Ledger"):
+                ledger = gr.Dataframe(
+                    headers=COLUMNS,
+                    datatype=["str"] * len(COLUMNS),
+                    label="Ledger",
+                    interactive=False,
+                    wrap=True,
+                    elem_id="ledger-table",
+                )
+                download = gr.File(label="Download CSV", elem_id="download-box")
 
         gr.Examples(
             examples=EXAMPLES,
@@ -244,6 +342,12 @@ def build_demo(process_fn: ProcessFn | None = None) -> gr.Blocks:
                 audio_box,
                 input_choice,
                 input_notice,
+                dashboard,
+                insights,
+                automation,
+                category_table,
+                party_table,
+                automation_table,
             ],
         )
         clear_button.click(
@@ -260,6 +364,12 @@ def build_demo(process_fn: ProcessFn | None = None) -> gr.Blocks:
                 audio_box,
                 input_choice,
                 input_notice,
+                dashboard,
+                insights,
+                automation,
+                category_table,
+                party_table,
+                automation_table,
             ],
         )
 
@@ -273,19 +383,7 @@ def add_to_ledger(
     currency: str,
     state: list[dict[str, Any]] | None,
     process_fn: ProcessFn,
-) -> tuple[
-    pd.DataFrame,
-    str,
-    str,
-    str,
-    str,
-    str | None,
-    list[dict[str, Any]],
-    Any,
-    Any,
-    Any,
-    str,
-]:
+) -> tuple[Any, ...]:
     rows = state or []
     choice = choose_input(note, audio_path, source_choice)
     if choice["status"] != "ready":
@@ -302,6 +400,7 @@ def add_to_ledger(
             gr.update(),
             gr.update(),
             choice["notice"],
+            *render_intelligence(rows),
         )
 
     if choice["source"] == "audio":
@@ -320,6 +419,7 @@ def add_to_ledger(
                 gr.update(),
                 gr.update(value="Voice note"),
                 "I could not transcribe that voice note. Try another recording or paste the note.",
+                *render_intelligence(rows),
             )
     else:
         combined_note = (note or "").strip()
@@ -348,6 +448,7 @@ def add_to_ledger(
         next_audio,
         gr.update(value="Auto"),
         notice,
+        *render_intelligence(rows),
     )
 
 
@@ -444,19 +545,22 @@ def write_csv(rows: list[dict[str, Any]]) -> str:
     return handle.name
 
 
-def clear_ledger() -> tuple[
-    pd.DataFrame,
-    str,
-    str,
-    str,
-    str,
-    None,
-    list[dict[str, Any]],
-    str,
-    None,
-    str,
-    str,
-]:
+def render_intelligence(rows: list[dict[str, Any]]) -> tuple[str, str, str, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    categories, parties, followups = build_tables(rows)
+    return (
+        build_dashboard_markdown(rows),
+        build_insights_markdown(rows),
+        build_reminder_markdown(rows),
+        pd.DataFrame(categories, columns=["category", "total", "display"]),
+        pd.DataFrame(parties, columns=["party", "total", "due"]),
+        pd.DataFrame(
+            followups,
+            columns=["priority", "counterparty", "amount", "item", "next_action", "cadence", "script", "source_row"],
+        ),
+    )
+
+
+def clear_ledger() -> tuple[Any, ...]:
     return (
         pd.DataFrame([], columns=COLUMNS),
         "No ledger rows yet.",
@@ -469,4 +573,5 @@ def clear_ledger() -> tuple[
         None,
         "Auto",
         "Ready for one note.",
+        *render_intelligence([]),
     )

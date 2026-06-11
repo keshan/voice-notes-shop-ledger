@@ -25,8 +25,12 @@ for a real person who keeps money notes in scraps, voice messages, or memory.
 - Record or upload a voice note; optional local Whisper transcription handles it.
 - Extract structured ledger rows with amount, party, item, category, status, and
   confidence.
-- See totals by expense/income/due and category.
-- Generate follow-up reminders for unpaid or ambiguous items.
+- See a live dashboard for net cash, cash in, cash out, due amount, follow-ups,
+  and average extraction confidence.
+- Review field intelligence: top category, most active party, biggest entry,
+  watch-list risks, and a daily field note.
+- Use the automation queue to turn due items into follow-up actions, reminder
+  cadence, and ready-to-send message scripts.
 - Export the ledger as CSV.
 - Run with a heuristic dev fallback before downloading a large GGUF model.
 
@@ -72,6 +76,13 @@ modal run modal_app.py::download_model
 modal deploy modal_app.py
 ```
 
+The production Modal deployment uses a GPU worker for llama.cpp inference:
+
+- GPU: Modal `A10`
+- Runtime: `llama-cpp-python` CUDA wheel
+- Model: `unsloth/gemma-4-12b-it-GGUF`
+- Quant: `gemma-4-12b-it-UD-Q4_K_XL.gguf`
+
 The app reads these environment variables:
 
 | Variable | Purpose |
@@ -92,3 +103,11 @@ Unified at 11.95B parameters, which is inside the hackathon's <=32B constraint.
 The implementation deliberately avoids external LLM APIs so the demo can earn
 the local-first/off-grid spirit of the hackathon. Modal is used for deployment,
 not as a hosted inference API.
+
+## Demo Flow
+
+1. Add a messy text or voice note.
+2. Show the clean ledger row.
+3. Open the dashboard and point to net cash, due amount, and risk flags.
+4. Open the automation queue and copy a follow-up script.
+5. Export the CSV.

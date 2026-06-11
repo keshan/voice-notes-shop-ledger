@@ -54,6 +54,8 @@ To force mock mode for a quick UI-only deployment, edit `LEDGER_MODEL_MODE` in
 ## 5. Notes For The Hackathon
 
 - Keep the demo video focused on a real user's note becoming a ledger row.
+- Show the dashboard and automation queue after the first row lands; those are
+  the clearest "next level" moments.
 - Mention the GGUF model name, parameter count, and quantization in the README
   or submission.
 - Include the Modal URL for judges and a Hugging Face model/repo link for the
