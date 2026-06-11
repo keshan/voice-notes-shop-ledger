@@ -41,6 +41,8 @@ app.py                 Local Gradio entrypoint
 modal_app.py           Modal deployment entrypoint
 shop_ledger/           App logic, UI, model backends
 tests/                 Unit tests for parsing and processing
+ARCHITECTURE.md        System architecture and data flow
+ROADMAP.md             Future feature ideas and next sprint options
 FIELD_NOTES.md         Hackathon report starter
 DEPLOYMENT.md          Modal deployment notes
 ```
@@ -65,7 +67,7 @@ python app.py
 
 ## Modal Deployment
 
-See [DEPLOYMENT.md](DEPLOYMENT.md).
+See [DEPLOYMENT.md](DEPLOYMENT.md) for the full Modal runbook.
 
 Short version:
 
@@ -82,6 +84,19 @@ The production Modal deployment uses a GPU worker for llama.cpp inference:
 - Runtime: `llama-cpp-python` CUDA wheel
 - Model: `unsloth/gemma-4-12b-it-GGUF`
 - Quant: `gemma-4-12b-it-UD-Q4_K_XL.gguf`
+
+Smoke test the GPU model path:
+
+```bash
+modal run modal_app.py::smoke
+```
+
+Expected signal:
+
+```text
+model_used: model.gguf
+gpu_type: A10
+```
 
 The app reads these environment variables:
 
@@ -111,3 +126,13 @@ not as a hosted inference API.
 3. Open the dashboard and point to net cash, due amount, and risk flags.
 4. Open the automation queue and copy a follow-up script.
 5. Export the CSV.
+
+## More Docs
+
+- [Architecture](ARCHITECTURE.md): code map, data flow, model contract,
+  fallback behavior, and testing strategy.
+- [Deployment](DEPLOYMENT.md): Modal GPU deployment, model volume, smoke tests,
+  logs, and troubleshooting.
+- [Roadmap](ROADMAP.md): dynamic graphs, modern dashboard layout, daily briefs,
+  review mode, counterparty cards, and other future ideas.
+- [Field Notes](FIELD_NOTES.md): hackathon report starter and demo beats.
