@@ -76,13 +76,17 @@ demoable and directly useful.
 
 ### 5. Mistake Review Mode
 
+Status: shipped in the third enhancement sprint.
+
 Add a "Review low-confidence rows" panel:
 
 - show rows below confidence threshold
 - ask simple correction questions
 - update the row in session state
 
-This would make the system feel trustworthy rather than overconfident.
+The app now has a Review Desk tab that shows low-confidence or incomplete rows
+and asks simple correction questions. A future version can make those questions
+editable and write corrections back into session state.
 
 ## Futuristic But Still Practical
 

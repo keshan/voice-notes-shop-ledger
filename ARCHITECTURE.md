@@ -61,6 +61,7 @@ Dashboard, ledger table, automation queue, CSV export
    - dynamic insight graph plan
    - Plotly insight figures
    - automation queue
+   - review queue
    - category and party tables
    - CSV export
 10. The analyzed input is cleared so the next note starts cleanly.
@@ -135,6 +136,7 @@ the reason.
   category mix, and party exposure
 - follow-up queue with cadence and scripts
 - reply studio variants for polite, friendly, and firm reminders
+- review queue for low-confidence or incomplete rows
 - daily field note
 
 The chart planner is deterministic first. It asks what matters most right now:
@@ -161,6 +163,8 @@ Tabs:
   intelligence, category and party breakdowns.
 - `Automation Queue`: follow-up actions, reminder cadence, and reply studio
   message variants.
+- `Review Desk`: low-confidence or incomplete rows with targeted correction
+  questions.
 - `Ledger`: raw ledger rows and CSV export.
 
 ## Modal Production Path
@@ -200,6 +204,7 @@ Current tests cover:
 - Plotly figure generation
 - follow-up queue priority
 - reply studio message variants
+- review queue generation
 - risk flags
 
 Run:

@@ -1,6 +1,13 @@
 import unittest
 
-from shop_ledger.insights import build_chart_plan, build_insight_figures, compute_metrics, followup_rows, risk_flags
+from shop_ledger.insights import (
+    build_chart_plan,
+    build_insight_figures,
+    compute_metrics,
+    followup_rows,
+    review_rows,
+    risk_flags,
+)
 
 
 ROWS = [
@@ -62,6 +69,26 @@ class InsightTests(unittest.TestCase):
 
         self.assertEqual(len(figures), 3)
         self.assertTrue(all(hasattr(figure, "to_plotly_json") for figure in figures))
+
+    def test_review_rows_include_low_confidence_entries(self):
+        rows = ROWS + [
+            {
+                "direction": "expense",
+                "payment_status": "",
+                "amount": 0,
+                "currency": "LKR",
+                "counterparty": "",
+                "item": "unknown",
+                "category": "uncategorized",
+                "confidence": 0.42,
+            }
+        ]
+
+        queue = review_rows(rows)
+
+        self.assertEqual(queue[0]["source_row"], 3)
+        self.assertIn("Low confidence", queue[0]["issue"])
+        self.assertIn("confirm", queue[0]["question"])
 
 
 if __name__ == "__main__":

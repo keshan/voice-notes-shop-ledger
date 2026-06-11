@@ -33,6 +33,8 @@ for a real person who keeps money notes in scraps, voice messages, or memory.
   watch-list risks, and a daily field note.
 - Use the automation queue to turn due items into follow-up actions, reminder
   cadence, and ready-to-send polite, friendly, or firm message scripts.
+- Review low-confidence or incomplete rows in a dedicated Review Desk before
+  exporting the CSV.
 - Export the ledger as CSV.
 - Run with a heuristic dev fallback before downloading a large GGUF model.
 
@@ -132,7 +134,8 @@ not as a hosted inference API.
    chose for the current ledger.
 4. Open the automation queue and choose a polite, friendly, or firm follow-up
    script.
-5. Export the CSV.
+5. Open the Review Desk to show how uncertain rows are handled.
+6. Export the CSV.
 
 ## More Docs
 

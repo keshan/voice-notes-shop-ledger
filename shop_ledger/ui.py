@@ -14,6 +14,7 @@ from shop_ledger.insights import (
     build_insight_figures,
     build_insights_markdown,
     build_reminder_markdown,
+    build_review_markdown,
     build_tables,
 )
 from shop_ledger.processor import LedgerProcessor, transcribe_audio
@@ -235,6 +236,26 @@ button.primary {
   padding: 12px;
 }
 
+.review-card {
+  background: rgba(8, 12, 18, 0.88);
+  border: 1px solid var(--ledger-line);
+  border-left: 4px solid var(--ledger-red);
+  border-radius: 8px;
+  margin: 10px 0;
+  padding: 12px;
+}
+
+.review-card code {
+  display: block;
+  white-space: normal;
+  margin-top: 8px;
+  color: var(--ledger-ink);
+  background: rgba(255, 122, 104, 0.08);
+  border: 1px solid rgba(255, 122, 104, 0.22);
+  border-radius: 6px;
+  padding: 8px;
+}
+
 .followup-card code {
   display: block;
   white-space: normal;
@@ -264,6 +285,7 @@ button.primary {
 
 #dashboard-panel,
 #automation-panel,
+#review-panel,
 #insight-panel {
   border: 1px solid var(--ledger-line);
   background: rgba(16, 21, 29, 0.86);
@@ -391,6 +413,15 @@ def build_demo(process_fn: ProcessFn | None = None) -> gr.Blocks:
                     interactive=False,
                     wrap=True,
                 )
+            with gr.Tab("Review Desk"):
+                review = gr.Markdown(build_review_markdown([]), elem_id="review-panel")
+                review_table = gr.Dataframe(
+                    headers=["source_row", "issue", "confidence", "counterparty", "item", "amount", "question"],
+                    datatype=["number", "str", "str", "str", "str", "str", "str"],
+                    label="Rows to verify",
+                    interactive=False,
+                    wrap=True,
+                )
             with gr.Tab("Ledger"):
                 ledger = gr.Dataframe(
                     headers=COLUMNS,
@@ -440,6 +471,8 @@ def build_demo(process_fn: ProcessFn | None = None) -> gr.Blocks:
                 category_table,
                 party_table,
                 automation_table,
+                review,
+                review_table,
             ],
         )
         clear_button.click(
@@ -466,6 +499,8 @@ def build_demo(process_fn: ProcessFn | None = None) -> gr.Blocks:
                 category_table,
                 party_table,
                 automation_table,
+                review,
+                review_table,
             ],
         )
 
@@ -642,7 +677,7 @@ def write_csv(rows: list[dict[str, Any]]) -> str:
 
 
 def render_intelligence(rows: list[dict[str, Any]]) -> tuple[Any, ...]:
-    categories, parties, followups = build_tables(rows)
+    categories, parties, followups, reviews = build_tables(rows)
     primary_chart, secondary_chart, tertiary_chart = build_insight_figures(rows)
     return (
         build_dashboard_markdown(rows),
@@ -668,6 +703,11 @@ def render_intelligence(rows: list[dict[str, Any]]) -> tuple[Any, ...]:
                 "firm_script",
                 "source_row",
             ],
+        ),
+        build_review_markdown(rows),
+        pd.DataFrame(
+            reviews,
+            columns=["source_row", "issue", "confidence", "counterparty", "item", "amount", "question"],
         ),
     )
 

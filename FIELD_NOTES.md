@@ -30,6 +30,8 @@ The current version also adds a dashboard and automation queue:
 - Risk flags for high-value dues and low-confidence extraction.
 - Ready-to-send follow-up scripts with suggested cadence and three tones:
   polite, friendly, and firm.
+- A Review Desk for low-confidence or incomplete rows, with simple questions
+  the shopkeeper can answer before exporting.
 
 ## Small Model Fit
 
@@ -51,7 +53,9 @@ when the schema is narrow and the UI keeps the workflow grounded.
 3. Show clean rows and totals.
 4. Open the dashboard and show due amount, the chosen graph, and risk flags.
 5. Open the automation queue and pick the right tone for a follow-up script.
-6. Export CSV.
+6. Open the Review Desk and show that uncertainty becomes a clear correction
+   task.
+7. Export CSV.
 
 ## Lessons
 

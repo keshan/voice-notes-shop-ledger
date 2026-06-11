@@ -163,6 +163,48 @@ def party_breakdown(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     ]
 
 
+def review_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    review = []
+    for index, row in enumerate(rows, start=1):
+        confidence = float(row.get("confidence") or 0)
+        missing = [
+            label
+            for label, value in {
+                "counterparty": row.get("counterparty"),
+                "item": row.get("item"),
+                "amount": row.get("amount"),
+                "payment status": row.get("payment_status"),
+            }.items()
+            if value in (None, "", 0)
+        ]
+        if confidence >= 0.6 and not missing:
+            continue
+        amount_text = money(amount(row), row.get("currency") or primary_currency(rows))
+        issue = "Low confidence" if confidence < 0.6 else "Missing detail"
+        if missing:
+            issue += f": {', '.join(missing)}"
+        review.append(
+            {
+                "source_row": index,
+                "issue": issue,
+                "confidence": f"{confidence:.0%}",
+                "counterparty": row.get("counterparty") or "Unknown",
+                "item": row.get("item") or "Unknown item",
+                "amount": amount_text,
+                "question": review_question(row, missing),
+            }
+        )
+    return review
+
+
+def review_question(row: dict[str, Any], missing: list[str]) -> str:
+    who = row.get("counterparty") or "this person"
+    item = row.get("item") or "this item"
+    if missing:
+        return f"Can you confirm the {', '.join(missing)} for {item}?"
+    return f"Can you confirm {who}, {item}, and the amount before exporting?"
+
+
 def build_dashboard_markdown(rows: list[dict[str, Any]]) -> str:
     metrics = compute_metrics(rows)
     currency = metrics["currency"]
@@ -327,8 +369,29 @@ def build_reminder_markdown(rows: list[dict[str, Any]]) -> str:
     return "\n".join(cards)
 
 
-def build_tables(rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
-    return category_breakdown(rows), party_breakdown(rows), followup_rows(rows)
+def build_review_markdown(rows: list[dict[str, Any]]) -> str:
+    queue = review_rows(rows)
+    if not rows:
+        return "### Review Desk\nRows that need a human check will appear here."
+    if not queue:
+        return "### Review Desk\nNo low-confidence rows waiting. Export still deserves a quick glance."
+
+    cards = ["### Review Desk"]
+    for item in queue[:8]:
+        cards.append(
+            "<div class='review-card'>"
+            f"<strong>Row {item['source_row']} · {item['issue']} · {item['confidence']}</strong>"
+            f"<p>{item['counterparty']} · {item['item']} · {item['amount']}</p>"
+            f"<code>{item['question']}</code>"
+            "</div>"
+        )
+    return "\n".join(cards)
+
+
+def build_tables(
+    rows: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
+    return category_breakdown(rows), party_breakdown(rows), followup_rows(rows), review_rows(rows)
 
 
 def base_figure(title: str, subtitle: str = "") -> go.Figure:
