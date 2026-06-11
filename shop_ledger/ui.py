@@ -11,6 +11,7 @@ import pandas as pd
 from shop_ledger.insights import (
     build_chart_markdown,
     build_dashboard_markdown,
+    build_daily_brief_markdown,
     build_insight_figures,
     build_insights_markdown,
     build_reminder_markdown,
@@ -21,6 +22,7 @@ from shop_ledger.processor import LedgerProcessor, prepare_document_input, trans
 
 
 ProcessFn = Callable[[str, str, list[str] | None], dict[str, Any]]
+DailyBriefFn = Callable[[list[dict[str, Any]], str], dict[str, str]]
 
 COLUMNS = [
     "date",
@@ -204,7 +206,8 @@ button.primary {
   padding: 14px;
 }
 
-#chart-director {
+#chart-director,
+#daily-brief-panel {
   min-height: 180px;
   border-left: 4px solid var(--ledger-blue);
 }
@@ -286,6 +289,7 @@ button.primary {
 #dashboard-panel,
 #automation-panel,
 #review-panel,
+#daily-brief-panel,
 #insight-panel {
   border: 1px solid var(--ledger-line);
   background: rgba(16, 21, 29, 0.86);
@@ -309,13 +313,18 @@ button.primary {
 """
 
 
-def build_demo(process_fn: ProcessFn | None = None) -> gr.Blocks:
+def build_demo(process_fn: ProcessFn | None = None, daily_brief_fn: DailyBriefFn | None = None) -> gr.Blocks:
     processor = LedgerProcessor.from_env()
 
     def local_process(note: str, currency: str, image_urls: list[str] | None = None) -> dict[str, Any]:
         return processor.process(note, currency=currency, image_urls=image_urls).model_dump(mode="json")
 
     active_process = process_fn or local_process
+
+    def local_daily_brief(rows: list[dict[str, Any]], currency: str) -> dict[str, str]:
+        return processor.daily_brief(rows, currency=currency)
+
+    active_daily_brief = daily_brief_fn or local_daily_brief
 
     with gr.Blocks(
         css=CSS,
@@ -376,6 +385,8 @@ def build_demo(process_fn: ProcessFn | None = None) -> gr.Blocks:
                 with gr.Row(elem_classes=["command-grid"]):
                     with gr.Column(elem_id="chart-director", elem_classes=["ops-card"]):
                         chart_director = gr.Markdown(build_chart_markdown([]))
+                        daily_brief = gr.Markdown(build_daily_brief_markdown([]), elem_id="daily-brief-panel")
+                        daily_brief_button = gr.Button("Generate daily brief", variant="secondary")
                         insights = gr.Markdown(build_insights_markdown([]))
                     with gr.Column(elem_id="chart-wall"):
                         primary_chart, secondary_chart, tertiary_chart = build_insight_figures([])
@@ -470,6 +481,7 @@ def build_demo(process_fn: ProcessFn | None = None) -> gr.Blocks:
                 input_notice,
                 dashboard,
                 chart_director,
+                daily_brief,
                 primary_plot,
                 secondary_plot,
                 tertiary_plot,
@@ -499,6 +511,7 @@ def build_demo(process_fn: ProcessFn | None = None) -> gr.Blocks:
                 input_notice,
                 dashboard,
                 chart_director,
+                daily_brief,
                 primary_plot,
                 secondary_plot,
                 tertiary_plot,
@@ -510,6 +523,11 @@ def build_demo(process_fn: ProcessFn | None = None) -> gr.Blocks:
                 review,
                 review_table,
             ],
+        )
+        daily_brief_button.click(
+            fn=lambda state, currency_value: generate_daily_brief(state, currency_value, active_daily_brief),
+            inputs=[ledger_state, currency],
+            outputs=[daily_brief],
         )
 
     return demo
@@ -745,6 +763,7 @@ def render_intelligence(rows: list[dict[str, Any]]) -> tuple[Any, ...]:
     return (
         build_dashboard_markdown(rows),
         build_chart_markdown(rows),
+        build_daily_brief_markdown(rows),
         primary_chart,
         secondary_chart,
         tertiary_chart,
@@ -791,3 +810,13 @@ def clear_ledger() -> tuple[Any, ...]:
         "Ready for one note.",
         *render_intelligence([]),
     )
+
+
+def generate_daily_brief(
+    state: list[dict[str, Any]] | None,
+    currency: str,
+    daily_brief_fn: DailyBriefFn,
+) -> str:
+    rows = state or []
+    result = daily_brief_fn(rows, currency or "LKR")
+    return build_daily_brief_markdown(rows, result.get("brief"), result.get("model_used", "unknown"))

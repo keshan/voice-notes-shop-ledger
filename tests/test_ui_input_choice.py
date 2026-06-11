@@ -2,7 +2,7 @@ import unittest
 from tempfile import NamedTemporaryFile
 
 from shop_ledger.processor import extract_document_text, prepare_document_input
-from shop_ledger.ui import add_to_ledger, choose_input
+from shop_ledger.ui import add_to_ledger, choose_input, generate_daily_brief
 
 
 class InputChoiceTests(unittest.TestCase):
@@ -119,6 +119,18 @@ class InputChoiceTests(unittest.TestCase):
         self.assertIsNone(captured["image_urls"])
         self.assertEqual(output[9]["value"], None)
         self.assertIn("Added 1 row", output[11])
+
+    def test_generate_daily_brief_uses_supplied_function(self):
+        rows = [{"amount": 1200, "currency": "LKR", "direction": "expense", "payment_status": "paid"}]
+
+        markdown = generate_daily_brief(
+            rows,
+            "LKR",
+            lambda supplied_rows, currency: {"brief": f"{len(supplied_rows)} rows in {currency}", "model_used": "fake"},
+        )
+
+        self.assertIn("1 rows in LKR", markdown)
+        self.assertIn("fake", markdown)
 
 
 if __name__ == "__main__":

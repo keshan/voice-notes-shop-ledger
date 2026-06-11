@@ -102,6 +102,31 @@ class LlamaLedgerBackend:
         result.model_used = Path(self.model_path).name
         return result
 
+    def daily_brief(self, rows: list[dict[str, Any]], currency: str = "LKR") -> str:
+        if not self.available:
+            return ""
+
+        self.load()
+        assert self._llm is not None
+
+        response = self._llm.create_chat_completion(
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You write a short shopkeeper daily brief from structured ledger rows. "
+                        "Be specific, practical, and under 80 words. Mention cash position, dues, "
+                        "largest pressure, and the next follow-up when relevant."
+                    ),
+                },
+                {"role": "user", "content": f"Currency: {currency}\nRows JSON:\n{json.dumps(rows, ensure_ascii=True)}"},
+            ],
+            max_tokens=180,
+            temperature=0.3,
+            top_p=0.9,
+        )
+        return str(response["choices"][0]["message"]["content"]).strip()
+
 
 def parse_json_object(text: str) -> dict[str, Any]:
     try:

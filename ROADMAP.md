@@ -51,6 +51,8 @@ console.
 
 ### 3. LLM-Generated Daily Brief
 
+Status: shipped in the Daily Brief enhancement sprint.
+
 After every few entries, generate a short "shopkeeper briefing":
 
 ```text
@@ -58,7 +60,9 @@ Today cash is negative because inventory spend is high. Nimal and Saman need
 follow-up. Tea packets are the biggest open due item.
 ```
 
-Keep this local/off-grid by using the same GGUF model.
+The dashboard now has a "Today's Shop Pulse" panel. It shows a local fallback
+brief immediately and can call Gemma through the Modal llama.cpp worker for a
+short practical summary from structured rows.
 
 ### 4. Voice Reply Studio
 

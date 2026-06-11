@@ -321,6 +321,29 @@ def build_insights_markdown(rows: list[dict[str, Any]]) -> str:
     )
 
 
+def build_daily_brief_markdown(rows: list[dict[str, Any]], brief: str | None = None, model_used: str = "local rules") -> str:
+    if not rows:
+        return "### Today's Shop Pulse\nAdd a few entries, then ask Gemma for the day's pulse."
+    text = brief or daily_brief_fallback(rows)
+    return f"### Today's Shop Pulse\n{text}\n\n<small>Brief: {model_used}</small>"
+
+
+def daily_brief_fallback(rows: list[dict[str, Any]]) -> str:
+    metrics = compute_metrics(rows)
+    currency = metrics["currency"]
+    top_category, top_category_total = top_counter(rows, "category")
+    queue = followup_rows(rows)
+    if queue:
+        lead_followup = f"{queue[0]['counterparty']} needs the first follow-up for {queue[0]['amount']}."
+    else:
+        lead_followup = "No urgent follow-up is waiting."
+    return (
+        f"{len(rows)} row(s) logged today. Net cash is {money(metrics['net_cash'], currency)}. "
+        f"Money moved most through {top_category} ({money(top_category_total, currency)}). "
+        f"{lead_followup}"
+    )
+
+
 def risk_flags(rows: list[dict[str, Any]]) -> list[str]:
     metrics = compute_metrics(rows)
     currency = metrics["currency"]

@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from shop_ledger.heuristics import heuristic_extract
+from shop_ledger.insights import daily_brief_fallback
 from shop_ledger.llama_backend import LlamaLedgerBackend
 from shop_ledger.schema import LedgerResult
 
@@ -44,6 +45,21 @@ class LedgerProcessor:
         if image_urls:
             result.questions.append("Document images need llama.cpp multimodal mode; mock mode only reads extracted text.")
         return result
+
+    def daily_brief(self, rows: list[dict[str, Any]], currency: str = "LKR") -> dict[str, str]:
+        if not rows:
+            return {"brief": "Add a few entries, then ask Gemma for the day's pulse.", "model_used": "local rules"}
+        if self.mode == "llama" and self.backend.available:
+            try:
+                brief = self.backend.daily_brief(rows, currency=currency)
+                if brief:
+                    return {"brief": brief, "model_used": Path(self.backend.model_path).name}
+            except Exception as exc:
+                return {
+                    "brief": daily_brief_fallback(rows),
+                    "model_used": f"local rules fallback ({type(exc).__name__})",
+                }
+        return {"brief": daily_brief_fallback(rows), "model_used": "local rules"}
 
 
 def transcribe_audio(audio_path: str | None) -> str:

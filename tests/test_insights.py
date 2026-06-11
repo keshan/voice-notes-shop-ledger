@@ -2,8 +2,10 @@ import unittest
 
 from shop_ledger.insights import (
     build_chart_plan,
+    build_daily_brief_markdown,
     build_insight_figures,
     compute_metrics,
+    daily_brief_fallback,
     followup_rows,
     review_rows,
     risk_flags,
@@ -89,6 +91,18 @@ class InsightTests(unittest.TestCase):
         self.assertEqual(queue[0]["source_row"], 3)
         self.assertIn("Low confidence", queue[0]["issue"])
         self.assertIn("confirm", queue[0]["question"])
+
+    def test_daily_brief_fallback_mentions_cash_and_followup(self):
+        brief = daily_brief_fallback(ROWS)
+
+        self.assertIn("Net cash", brief)
+        self.assertIn("Nimal", brief)
+
+    def test_daily_brief_markdown_wraps_model_name(self):
+        markdown = build_daily_brief_markdown(ROWS, "Cash is tight today.", "model.gguf")
+
+        self.assertIn("Today's Shop Pulse", markdown)
+        self.assertIn("model.gguf", markdown)
 
 
 if __name__ == "__main__":
