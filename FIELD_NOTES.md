@@ -32,6 +32,8 @@ The current version also adds a dashboard and automation queue:
   dues, expenses, cashflow, confidence review, or category mix.
 - A Gemma-generated daily shop pulse that summarizes cash position, pressure,
   and the next follow-up from structured rows.
+- Ask My Ledger for natural questions such as who owes the most or where cash
+  went, grounded in the structured rows.
 - Category and counterparty breakdowns.
 - Risk flags for high-value dues and low-confidence extraction.
 - Ready-to-send follow-up scripts with suggested cadence and three tones:
@@ -59,10 +61,11 @@ when the schema is narrow and the UI keeps the workflow grounded.
 3. Show clean rows and totals.
 4. Open the dashboard and show due amount, the chosen graph, and risk flags.
 5. Generate the daily shop pulse and read the short practical summary.
-6. Open the automation queue and pick the right tone for a follow-up script.
-7. Open the Review Desk and show that uncertainty becomes a clear correction
+6. Ask "Who owes me most?" and show the answer.
+7. Open the automation queue and pick the right tone for a follow-up script.
+8. Open the Review Desk and show that uncertainty becomes a clear correction
    task.
-8. Export CSV.
+9. Export CSV.
 
 ## Lessons
 

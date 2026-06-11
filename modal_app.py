@@ -93,6 +93,10 @@ class LedgerAgent:
     def daily_brief(self, rows: list[dict], currency: str = "LKR") -> dict:
         return self.processor.daily_brief(rows, currency=currency)
 
+    @modal.method()
+    def ask_ledger(self, rows: list[dict], question: str, currency: str = "LKR") -> dict:
+        return self.processor.ask_ledger(rows, question, currency=currency)
+
 
 @app.function(image=image, volumes={MODEL_DIR: volume}, gpu=GPU_TYPE, cpu=8, memory=32768, timeout=1800)
 def smoke_test_model() -> dict:
@@ -131,7 +135,10 @@ def fastapi_app():
     def daily_brief_remote(rows: list[dict], currency: str) -> dict:
         return LedgerAgent().daily_brief.remote(rows, currency)
 
-    demo = build_demo(process_fn=process_remote, daily_brief_fn=daily_brief_remote)
+    def ask_ledger_remote(rows: list[dict], question: str, currency: str) -> dict:
+        return LedgerAgent().ask_ledger.remote(rows, question, currency)
+
+    demo = build_demo(process_fn=process_remote, daily_brief_fn=daily_brief_remote, ask_ledger_fn=ask_ledger_remote)
     return mount_gradio_app(app=web_app, blocks=demo, path="/")
 
 

@@ -2,7 +2,7 @@ import unittest
 from tempfile import NamedTemporaryFile
 
 from shop_ledger.processor import extract_document_text, prepare_document_input
-from shop_ledger.ui import add_to_ledger, choose_input, generate_daily_brief
+from shop_ledger.ui import add_to_ledger, ask_ledger, choose_input, generate_daily_brief
 
 
 class InputChoiceTests(unittest.TestCase):
@@ -130,6 +130,19 @@ class InputChoiceTests(unittest.TestCase):
         )
 
         self.assertIn("1 rows in LKR", markdown)
+        self.assertIn("fake", markdown)
+
+    def test_ask_ledger_uses_supplied_function(self):
+        rows = [{"amount": 7500, "currency": "LKR", "payment_status": "due"}]
+
+        markdown = ask_ledger(
+            rows,
+            "Who owes me most?",
+            "LKR",
+            lambda supplied_rows, question, currency: {"answer": f"{question} / {len(supplied_rows)}", "model_used": "fake"},
+        )
+
+        self.assertIn("Who owes me most?", markdown)
         self.assertIn("fake", markdown)
 
 

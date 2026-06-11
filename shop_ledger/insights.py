@@ -344,6 +344,45 @@ def daily_brief_fallback(rows: list[dict[str, Any]]) -> str:
     )
 
 
+def answer_ledger_question(rows: list[dict[str, Any]], question: str) -> str:
+    text = question.strip().lower()
+    if not rows:
+        return "No ledger rows yet. Add a note, voice memo, or document first."
+    if not text:
+        return "Ask something like: who owes me most, what should I follow up today, or where did cash go?"
+
+    currency = primary_currency(rows)
+    if any(phrase in text for phrase in ("owe", "owes", "due", "who owes")):
+        due_by_party: dict[str, float] = defaultdict(float)
+        for row in rows:
+            if row.get("payment_status") == "due":
+                due_by_party[str(row.get("counterparty") or "Unknown")] += amount(row)
+        if not due_by_party:
+            return "No due items are open right now."
+        party, total = max(due_by_party.items(), key=lambda item: item[1])
+        return f"{party} owes the most: {money(total, currency)}."
+
+    if any(phrase in text for phrase in ("follow up", "followup", "remind", "today")):
+        queue = followup_rows(rows)
+        if not queue:
+            return "No follow-ups are waiting right now."
+        first = queue[0]
+        return f"Follow up with {first['counterparty']} first about {first['amount']} for {first['item']}. Suggested cadence: {first['cadence']}."
+
+    if any(phrase in text for phrase in ("cash go", "spent", "expense", "cash out", "where did cash")):
+        expenses = [row for row in rows if row.get("direction") == "expense"]
+        if not expenses:
+            return "No paid expenses are logged yet."
+        top_category, total = top_counter(expenses, "category")
+        return f"Cash went mostly to {top_category}: {money(total, currency)}."
+
+    metrics = compute_metrics(rows)
+    return (
+        f"Ledger snapshot: {len(rows)} row(s), net cash {money(metrics['net_cash'], currency)}, "
+        f"{money(metrics['due_income'], currency)} due, and {metrics['open_followups']} follow-up(s) open."
+    )
+
+
 def risk_flags(rows: list[dict[str, Any]]) -> list[str]:
     metrics = compute_metrics(rows)
     currency = metrics["currency"]

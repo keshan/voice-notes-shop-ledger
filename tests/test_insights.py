@@ -1,6 +1,7 @@
 import unittest
 
 from shop_ledger.insights import (
+    answer_ledger_question,
     build_chart_plan,
     build_daily_brief_markdown,
     build_insight_figures,
@@ -103,6 +104,17 @@ class InsightTests(unittest.TestCase):
 
         self.assertIn("Today's Shop Pulse", markdown)
         self.assertIn("model.gguf", markdown)
+
+    def test_answer_ledger_question_answers_dues(self):
+        answer = answer_ledger_question(ROWS, "Who owes me most?")
+
+        self.assertIn("Nimal", answer)
+        self.assertIn("LKR 7,500", answer)
+
+    def test_answer_ledger_question_answers_cash_spend(self):
+        answer = answer_ledger_question(ROWS, "Where did cash go?")
+
+        self.assertIn("inventory", answer)
 
 
 if __name__ == "__main__":

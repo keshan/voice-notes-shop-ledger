@@ -134,6 +134,8 @@ This becomes a daily habit rather than a one-off tool.
 
 ### 9. "Ask My Ledger"
 
+Status: shipped in the Ask My Ledger enhancement sprint.
+
 A local natural-language query box:
 
 ```text
@@ -142,7 +144,9 @@ What did I spend on inventory?
 What should I follow up today?
 ```
 
-The app can answer from structured rows, not from raw model memory.
+The dashboard now includes a question box. Common questions are answered
+deterministically from structured rows, and Modal production can route the same
+rows to Gemma for a concise local/off-grid answer.
 
 ### 10. Tiny Forecasts
 

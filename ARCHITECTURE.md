@@ -65,6 +65,7 @@ Dashboard, ledger table, automation queue, CSV export
    - field intelligence
    - dynamic insight graph plan
    - daily shop-pulse brief
+   - local ledger question answer
    - Plotly insight figures
    - automation queue
    - review queue
@@ -139,6 +140,7 @@ the reason.
 - low-confidence risk flags
 - chart plan selection
 - daily brief generation with Gemma or local fallback
+- Ask My Ledger answers from structured rows with Gemma or local fallback
 - Plotly figures for due radar, spend pressure, cashflow, confidence review,
   category mix, and party exposure
 - follow-up queue with cadence and scripts
@@ -168,7 +170,8 @@ Top area:
 Tabs:
 
 - `Dashboard`: KPIs, chart director, dynamic Plotly graphs, field
-  intelligence, Gemma daily brief, category and party breakdowns.
+  intelligence, Gemma daily brief, Ask My Ledger, category and party
+  breakdowns.
 - `Automation Queue`: follow-up actions, reminder cadence, and reply studio
   message variants.
 - `Review Desk`: low-confidence or incomplete rows with targeted correction

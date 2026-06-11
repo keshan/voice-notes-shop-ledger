@@ -23,6 +23,7 @@ from shop_ledger.processor import LedgerProcessor, prepare_document_input, trans
 
 ProcessFn = Callable[[str, str, list[str] | None], dict[str, Any]]
 DailyBriefFn = Callable[[list[dict[str, Any]], str], dict[str, str]]
+AskLedgerFn = Callable[[list[dict[str, Any]], str, str], dict[str, str]]
 
 COLUMNS = [
     "date",
@@ -207,7 +208,8 @@ button.primary {
 }
 
 #chart-director,
-#daily-brief-panel {
+#daily-brief-panel,
+#ask-ledger-panel {
   min-height: 180px;
   border-left: 4px solid var(--ledger-blue);
 }
@@ -290,6 +292,7 @@ button.primary {
 #automation-panel,
 #review-panel,
 #daily-brief-panel,
+#ask-ledger-panel,
 #insight-panel {
   border: 1px solid var(--ledger-line);
   background: rgba(16, 21, 29, 0.86);
@@ -313,7 +316,11 @@ button.primary {
 """
 
 
-def build_demo(process_fn: ProcessFn | None = None, daily_brief_fn: DailyBriefFn | None = None) -> gr.Blocks:
+def build_demo(
+    process_fn: ProcessFn | None = None,
+    daily_brief_fn: DailyBriefFn | None = None,
+    ask_ledger_fn: AskLedgerFn | None = None,
+) -> gr.Blocks:
     processor = LedgerProcessor.from_env()
 
     def local_process(note: str, currency: str, image_urls: list[str] | None = None) -> dict[str, Any]:
@@ -325,6 +332,11 @@ def build_demo(process_fn: ProcessFn | None = None, daily_brief_fn: DailyBriefFn
         return processor.daily_brief(rows, currency=currency)
 
     active_daily_brief = daily_brief_fn or local_daily_brief
+
+    def local_ask_ledger(rows: list[dict[str, Any]], question: str, currency: str) -> dict[str, str]:
+        return processor.ask_ledger(rows, question, currency=currency)
+
+    active_ask_ledger = ask_ledger_fn or local_ask_ledger
 
     with gr.Blocks(
         css=CSS,
@@ -387,6 +399,16 @@ def build_demo(process_fn: ProcessFn | None = None, daily_brief_fn: DailyBriefFn
                         chart_director = gr.Markdown(build_chart_markdown([]))
                         daily_brief = gr.Markdown(build_daily_brief_markdown([]), elem_id="daily-brief-panel")
                         daily_brief_button = gr.Button("Generate daily brief", variant="secondary")
+                        ask_question = gr.Textbox(
+                            label="Ask my ledger",
+                            placeholder="Who owes me most?",
+                            lines=1,
+                        )
+                        ask_button = gr.Button("Ask ledger", variant="secondary")
+                        ask_answer = gr.Markdown(
+                            "### Ask My Ledger\nAsk about dues, follow-ups, or where cash went.",
+                            elem_id="ask-ledger-panel",
+                        )
                         insights = gr.Markdown(build_insights_markdown([]))
                     with gr.Column(elem_id="chart-wall"):
                         primary_chart, secondary_chart, tertiary_chart = build_insight_figures([])
@@ -528,6 +550,11 @@ def build_demo(process_fn: ProcessFn | None = None, daily_brief_fn: DailyBriefFn
             fn=lambda state, currency_value: generate_daily_brief(state, currency_value, active_daily_brief),
             inputs=[ledger_state, currency],
             outputs=[daily_brief],
+        )
+        ask_button.click(
+            fn=lambda state, question, currency_value: ask_ledger(state, question, currency_value, active_ask_ledger),
+            inputs=[ledger_state, ask_question, currency],
+            outputs=[ask_answer],
         )
 
     return demo
@@ -820,3 +847,16 @@ def generate_daily_brief(
     rows = state or []
     result = daily_brief_fn(rows, currency or "LKR")
     return build_daily_brief_markdown(rows, result.get("brief"), result.get("model_used", "unknown"))
+
+
+def ask_ledger(
+    state: list[dict[str, Any]] | None,
+    question: str,
+    currency: str,
+    ask_ledger_fn: AskLedgerFn,
+) -> str:
+    rows = state or []
+    result = ask_ledger_fn(rows, question or "", currency or "LKR")
+    answer = result.get("answer") or "No answer available."
+    model_used = result.get("model_used", "unknown")
+    return f"### Ask My Ledger\n{answer}\n\n<small>Answer: {model_used}</small>"

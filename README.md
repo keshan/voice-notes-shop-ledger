@@ -32,6 +32,8 @@ for a real person who keeps money notes in scraps, voice messages, or memory.
 - Let the app pick an insight graph based on the ledger state: unpaid dues,
   expense pressure, cashflow over time, confidence review, or category mix.
 - Generate a Gemma-powered "today's shop pulse" from the structured ledger rows.
+- Ask local ledger questions such as "Who owes me most?", "What should I follow
+  up today?", and "Where did cash go?"
 - Review field intelligence: top category, most active party, biggest entry,
   watch-list risks, and a daily field note.
 - Use the automation queue to turn due items into follow-up actions, reminder
@@ -139,10 +141,11 @@ not as a hosted inference API.
 2. Upload a receipt/photo/PDF and show it entering the same ledger flow.
 3. Open the dashboard and point to net cash, due amount, the chosen graph, and
    the generated daily brief.
-4. Open the automation queue and choose a polite, friendly, or firm follow-up
+4. Ask "Who owes me most?" and show the structured answer.
+5. Open the automation queue and choose a polite, friendly, or firm follow-up
    script.
-5. Open the Review Desk to show how uncertain rows are handled.
-6. Export the CSV.
+6. Open the Review Desk to show how uncertain rows are handled.
+7. Export the CSV.
 
 ## More Docs
 

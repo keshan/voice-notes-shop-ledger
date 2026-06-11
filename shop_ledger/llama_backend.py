@@ -127,6 +127,37 @@ class LlamaLedgerBackend:
         )
         return str(response["choices"][0]["message"]["content"]).strip()
 
+    def answer_ledger_question(self, rows: list[dict[str, Any]], question: str, currency: str = "LKR") -> str:
+        if not self.available:
+            return ""
+
+        self.load()
+        assert self._llm is not None
+
+        response = self._llm.create_chat_completion(
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "Answer questions about a small shop ledger using only the provided structured rows. "
+                        "Be concise, practical, and mention amounts/counterparties when relevant. "
+                        "If the rows do not contain the answer, say what is missing."
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": (
+                        f"Currency: {currency}\nQuestion: {question}\nRows JSON:\n"
+                        f"{json.dumps(rows, ensure_ascii=True)}"
+                    ),
+                },
+            ],
+            max_tokens=220,
+            temperature=0.2,
+            top_p=0.9,
+        )
+        return str(response["choices"][0]["message"]["content"]).strip()
+
 
 def parse_json_object(text: str) -> dict[str, Any]:
     try:
