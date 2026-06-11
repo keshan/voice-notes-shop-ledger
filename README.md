@@ -16,7 +16,8 @@ for a real person who keeps money notes in scraps, voice messages, or memory.
 - **No cloud inference APIs:** the language model runs through `llama.cpp` via
   `llama-cpp-python`.
 - **Gradio canvas:** the whole interface is a Gradio app.
-- **Modal deployment:** `modal_app.py` serves the Gradio UI as a Modal web app.
+- **Modal GPU deployment:** `modal_app.py` serves the Gradio UI and runs
+  llama.cpp inference on a Modal `A10` GPU worker.
 
 ## Features
 
@@ -77,6 +78,8 @@ The app reads these environment variables:
 | --- | --- |
 | `LEDGER_MODEL_MODE` | `mock` or `llama` |
 | `LLAMA_GGUF_PATH` | Local path to a GGUF model |
+| `LLAMA_N_GPU_LAYERS` | Number of llama.cpp layers to offload, `-1` on Modal |
+| `LLAMA_N_CTX` | llama.cpp context window, `2048` on Modal |
 | `WHISPER_MODEL_SIZE` | Optional faster-whisper model size, defaults to `tiny` |
 
 ## Model Notes

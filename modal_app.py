@@ -10,27 +10,35 @@ MODEL_DIR = "/models"
 DEFAULT_MODEL_FILE = "model.gguf"
 DEFAULT_GGUF_REPO = "unsloth/gemma-4-12b-it-GGUF"
 DEFAULT_GGUF_FILE = "gemma-4-12b-it-UD-Q4_K_XL.gguf"
+GPU_TYPE = "A10"
 
 app = modal.App(APP_NAME)
 volume = modal.Volume.from_name("voice-notes-shop-ledger-models", create_if_missing=True)
 
 image = (
-    modal.Image.debian_slim(python_version="3.12")
-    .apt_install("build-essential", "cmake", "git", "libsndfile1")
+    modal.Image.from_registry("nvidia/cuda:12.8.1-devel-ubuntu24.04", add_python="3.12")
+    .entrypoint([])
+    .apt_install("build-essential", "cmake", "git", "libsndfile1", "ninja-build")
     .pip_install(
         "fastapi[standard]>=0.115,<0.116",
         "gradio>=5.5,<6",
         "huggingface-hub>=0.36,<1",
-        "llama-cpp-python>=0.3.16,<0.4",
         "pandas>=2.2,<3",
         "pydantic>=2.9,<3",
         "faster-whisper>=1.1,<2",
+    )
+    .run_commands(
+        "pip install --no-cache-dir --force-reinstall --prefer-binary --only-binary=:all: "
+        "'llama-cpp-python>=0.3.16,<0.4' "
+        "--extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu125"
     )
     .env(
         {
             "PYTHONPATH": "/root",
             "LEDGER_MODEL_MODE": "llama",
             "LLAMA_GGUF_PATH": f"{MODEL_DIR}/{DEFAULT_MODEL_FILE}",
+            "LLAMA_N_GPU_LAYERS": "-1",
+            "LLAMA_N_CTX": "2048",
             "WHISPER_MODEL_SIZE": "tiny",
         }
     )
@@ -60,9 +68,10 @@ def download_model(repo_id: str = DEFAULT_GGUF_REPO, filename: str = DEFAULT_GGU
 @app.cls(
     image=image,
     volumes={MODEL_DIR: volume},
+    gpu=GPU_TYPE,
     cpu=8,
     memory=32768,
-    timeout=600,
+    timeout=1800,
 )
 class LedgerAgent:
     @modal.enter()
@@ -78,7 +87,7 @@ class LedgerAgent:
         return result.model_dump(mode="json")
 
 
-@app.function(image=image, volumes={MODEL_DIR: volume}, cpu=8, memory=32768, timeout=900)
+@app.function(image=image, volumes={MODEL_DIR: volume}, gpu=GPU_TYPE, cpu=8, memory=32768, timeout=1800)
 def smoke_test_model() -> dict:
     """Run a sample ledger extraction inside Modal and return model metadata."""
     from shop_ledger.processor import LedgerProcessor
@@ -95,6 +104,7 @@ def smoke_test_model() -> dict:
         "amounts": [entry.amount for entry in result.entries],
         "statuses": [entry.payment_status for entry in result.entries],
         "questions": result.questions,
+        "gpu_type": GPU_TYPE,
     }
 
 
@@ -118,3 +128,8 @@ def fastapi_app():
 @app.local_entrypoint()
 def main(repo_id: str = DEFAULT_GGUF_REPO, filename: str = DEFAULT_GGUF_FILE) -> None:
     print(download_model.remote(repo_id, filename))
+
+
+@app.local_entrypoint()
+def smoke() -> None:
+    print(smoke_test_model.remote())

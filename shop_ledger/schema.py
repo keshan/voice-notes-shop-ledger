@@ -36,6 +36,24 @@ class LedgerEntry(BaseModel):
     confidence: float = 0.5
     original_note: str = ""
 
+    @field_validator(
+        "date",
+        "counterparty",
+        "item",
+        "quantity",
+        "currency",
+        "category",
+        "due_date",
+        "reminder",
+        "original_note",
+        mode="before",
+    )
+    @classmethod
+    def parse_optional_text(cls, value: Any) -> str:
+        if value is None:
+            return ""
+        return str(value)
+
     @field_validator("amount", mode="before")
     @classmethod
     def parse_amount(cls, value: Any) -> float:

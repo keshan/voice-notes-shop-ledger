@@ -30,7 +30,7 @@ class LedgerProcessor:
             except Exception as exc:
                 fallback = heuristic_extract(note, currency=currency)
                 fallback.model_used = f"heuristic fallback ({type(exc).__name__})"
-                fallback.questions.append("The llama.cpp model was unavailable, so heuristics were used.")
+                fallback.questions.append(f"The llama.cpp model was unavailable, so heuristics were used: {exc}")
                 return fallback
         result = heuristic_extract(note, currency=currency)
         result.model_used = "mock heuristic"

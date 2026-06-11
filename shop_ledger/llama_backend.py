@@ -41,14 +41,14 @@ class LlamaLedgerBackend:
     def __init__(
         self,
         model_path: str | None = None,
-        n_ctx: int = 4096,
+        n_ctx: int | None = None,
         n_threads: int | None = None,
-        n_gpu_layers: int = 0,
+        n_gpu_layers: int | None = None,
     ) -> None:
         self.model_path = model_path or os.getenv("LLAMA_GGUF_PATH", "")
-        self.n_ctx = n_ctx
+        self.n_ctx = n_ctx or int(os.getenv("LLAMA_N_CTX", "4096"))
         self.n_threads = n_threads or max(2, (os.cpu_count() or 4) - 1)
-        self.n_gpu_layers = n_gpu_layers
+        self.n_gpu_layers = n_gpu_layers if n_gpu_layers is not None else int(os.getenv("LLAMA_N_GPU_LAYERS", "0"))
         self._llm: Any | None = None
 
     @property
