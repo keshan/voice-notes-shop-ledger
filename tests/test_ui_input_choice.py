@@ -2,7 +2,7 @@ import unittest
 from tempfile import NamedTemporaryFile
 
 from shop_ledger.processor import extract_document_text, prepare_document_input
-from shop_ledger.ui import add_to_ledger, ask_ledger, choose_input, generate_daily_brief
+from shop_ledger.ui import add_to_ledger, ask_ledger, ask_ledger_chat, choose_input, generate_daily_brief, initial_ask_chat
 
 
 class InputChoiceTests(unittest.TestCase):
@@ -144,6 +144,22 @@ class InputChoiceTests(unittest.TestCase):
 
         self.assertIn("Who owes me most?", markdown)
         self.assertIn("fake", markdown)
+
+    def test_ask_ledger_chat_appends_messages_and_clears_input(self):
+        rows = [{"amount": 7500, "currency": "LKR", "payment_status": "due"}]
+
+        history, next_question = ask_ledger_chat(
+            rows,
+            "Who owes me most?",
+            initial_ask_chat(),
+            "LKR",
+            lambda supplied_rows, question, currency: {"answer": "Nimal owes LKR 7,500.", "model_used": "fake"},
+        )
+
+        self.assertEqual(next_question, "")
+        self.assertEqual(history[-2]["role"], "user")
+        self.assertEqual(history[-1]["role"], "assistant")
+        self.assertIn("Nimal", history[-1]["content"])
 
 
 if __name__ == "__main__":

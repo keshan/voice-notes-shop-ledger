@@ -30,10 +30,11 @@ for a real person who keeps money notes in scraps, voice messages, or memory.
 - See a live dashboard for net cash, cash in, cash out, due amount, follow-ups,
   and average extraction confidence.
 - Let the app pick an insight graph based on the ledger state: unpaid dues,
-  expense pressure, cashflow over time, confidence review, or category mix.
+  expense pressure, cashflow over time, confidence review, or category mix. The
+  Plotly charts use the same dark ledger theme as the rest of the app.
 - Generate a Gemma-powered "today's shop pulse" from the structured ledger rows.
-- Ask local ledger questions such as "Who owes me most?", "What should I follow
-  up today?", and "Where did cash go?"
+- Ask local ledger questions in a dedicated chat such as "Who owes me most?",
+  "What should I follow up today?", and "Where did cash go?"
 - View a Shop Pulse Timeline that turns rows into a visual story of cash in,
   cash out, dues, and logged events.
 - Review field intelligence: top category, most active party, biggest entry,

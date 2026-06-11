@@ -27,6 +27,7 @@ from shop_ledger.processor import LedgerProcessor, prepare_document_input, trans
 ProcessFn = Callable[[str, str, list[str] | None], dict[str, Any]]
 DailyBriefFn = Callable[[list[dict[str, Any]], str], dict[str, str]]
 AskLedgerFn = Callable[[list[dict[str, Any]], str, str], dict[str, str]]
+ChatHistory = list[dict[str, str]]
 
 COLUMNS = [
     "date",
@@ -196,14 +197,20 @@ button.primary {
   margin-top: 6px;
 }
 
-.command-grid {
+.dashboard-grid {
   display: grid;
-  grid-template-columns: minmax(260px, 0.9fr) minmax(360px, 1.6fr);
+  grid-template-columns: minmax(300px, 0.9fr) minmax(520px, 1.7fr);
   gap: 12px;
-  align-items: stretch;
+  align-items: start;
 }
 
-.ops-card {
+.ops-stack {
+  display: grid;
+  gap: 12px;
+}
+
+.ops-card,
+.chat-panel {
   border: 1px solid var(--ledger-line);
   background: rgba(8, 12, 18, 0.88);
   border-radius: 8px;
@@ -219,20 +226,54 @@ button.primary {
 
 #chart-wall {
   border: 1px solid var(--ledger-line);
-  background: rgba(8, 12, 18, 0.72);
+  background:
+    linear-gradient(180deg, rgba(16, 21, 29, 0.92), rgba(8, 12, 18, 0.88));
   border-radius: 8px;
-  padding: 10px;
+  padding: 12px;
 }
 
 #chart-wall .block,
 #signal-row .block {
-  background: rgba(8, 12, 18, 0.28) !important;
-  border-color: rgba(157, 177, 154, 0.14) !important;
+  background: rgba(8, 12, 18, 0.34) !important;
+  border-color: rgba(157, 177, 154, 0.18) !important;
   border-radius: 8px !important;
 }
 
 #signal-row {
   margin-top: 10px;
+}
+
+#ask-chat-panel {
+  border-left: 4px solid var(--ledger-green);
+}
+
+#ask-chat-panel .wrap {
+  background: transparent !important;
+}
+
+#ask-chatbot {
+  min-height: 300px;
+  border: 1px solid rgba(157, 177, 154, 0.18);
+  border-radius: 8px;
+  background: rgba(6, 10, 15, 0.72);
+}
+
+#ask-chatbot .message {
+  border-radius: 8px !important;
+}
+
+#ask-chatbot .user {
+  background: rgba(138, 180, 255, 0.14) !important;
+  border: 1px solid rgba(138, 180, 255, 0.22) !important;
+}
+
+#ask-chatbot .bot {
+  background: rgba(139, 220, 139, 0.12) !important;
+  border: 1px solid rgba(139, 220, 139, 0.22) !important;
+}
+
+#ask-row {
+  align-items: end;
 }
 
 .followup-card {
@@ -343,7 +384,7 @@ button.primary {
     grid-template-columns: 1fr;
   }
 
-  .command-grid {
+  .dashboard-grid {
     grid-template-columns: 1fr;
   }
 
@@ -432,28 +473,48 @@ def build_demo(
             with gr.Tab("Dashboard"):
                 with gr.Row(elem_id="dashboard-panel"):
                     dashboard = gr.Markdown(build_dashboard_markdown([]))
-                with gr.Row(elem_classes=["command-grid"]):
-                    with gr.Column(elem_id="chart-director", elem_classes=["ops-card"]):
-                        chart_director = gr.Markdown(build_chart_markdown([]))
+                with gr.Row(elem_classes=["dashboard-grid"]):
+                    with gr.Column(elem_classes=["ops-stack"]):
+                        with gr.Column(elem_id="chart-director", elem_classes=["ops-card"]):
+                            chart_director = gr.Markdown(build_chart_markdown([]))
                         daily_brief = gr.Markdown(build_daily_brief_markdown([]), elem_id="daily-brief-panel")
                         daily_brief_button = gr.Button("Generate daily brief", variant="secondary")
-                        ask_question = gr.Textbox(
-                            label="Ask my ledger",
-                            placeholder="Who owes me most?",
-                            lines=1,
-                        )
-                        ask_button = gr.Button("Ask ledger", variant="secondary")
-                        ask_answer = gr.Markdown(
-                            "### Ask My Ledger\nAsk about dues, follow-ups, or where cash went.",
-                            elem_id="ask-ledger-panel",
-                        )
-                        insights = gr.Markdown(build_insights_markdown([]))
+                        insights = gr.Markdown(build_insights_markdown([]), elem_id="insight-panel")
                     with gr.Column(elem_id="chart-wall"):
                         primary_chart, secondary_chart, tertiary_chart = build_insight_figures([])
                         primary_plot = gr.Plot(value=primary_chart, label="Insight graph")
                         with gr.Row(elem_id="signal-row"):
                             secondary_plot = gr.Plot(value=secondary_chart, label="Cash trail")
                             tertiary_plot = gr.Plot(value=tertiary_chart, label="People ledger")
+                with gr.Row(elem_id="ask-chat-panel", elem_classes=["chat-panel"]):
+                    with gr.Column(scale=5):
+                        ask_chatbot = gr.Chatbot(
+                            value=initial_ask_chat(),
+                            label="Ask My Ledger",
+                            type="messages",
+                            height=320,
+                            elem_id="ask-chatbot",
+                        )
+                        with gr.Row(elem_id="ask-row"):
+                            ask_question = gr.Textbox(
+                                label="Ask my ledger",
+                                placeholder="Who owes me most?",
+                                lines=1,
+                                scale=5,
+                            )
+                            ask_button = gr.Button("Ask", variant="primary", scale=1)
+                            ask_clear = gr.Button("Reset chat", scale=1)
+                    with gr.Column(scale=2):
+                        gr.Markdown(
+                            """
+                            ### Good questions
+                            - Who owes me most?
+                            - What should I follow up today?
+                            - Where did cash go?
+                            - Give me the current ledger snapshot.
+                            """,
+                            elem_id="ask-ledger-panel",
+                        )
                 with gr.Row():
                     category_table = gr.Dataframe(
                         headers=["category", "total", "display"],
@@ -579,7 +640,7 @@ def build_demo(
             ],
         )
         clear_button.click(
-            fn=clear_ledger,
+            fn=lambda: (*clear_ledger(), initial_ask_chat(), ""),
             outputs=[
                 ledger,
                 summary,
@@ -609,6 +670,8 @@ def build_demo(
                 timeline,
                 timeline_plot,
                 timeline_table,
+                ask_chatbot,
+                ask_question,
             ],
         )
         daily_brief_button.click(
@@ -617,9 +680,30 @@ def build_demo(
             outputs=[daily_brief],
         )
         ask_button.click(
-            fn=lambda state, question, currency_value: ask_ledger(state, question, currency_value, active_ask_ledger),
-            inputs=[ledger_state, ask_question, currency],
-            outputs=[ask_answer],
+            fn=lambda state, question, history, currency_value: ask_ledger_chat(
+                state,
+                question,
+                history,
+                currency_value,
+                active_ask_ledger,
+            ),
+            inputs=[ledger_state, ask_question, ask_chatbot, currency],
+            outputs=[ask_chatbot, ask_question],
+        )
+        ask_question.submit(
+            fn=lambda state, question, history, currency_value: ask_ledger_chat(
+                state,
+                question,
+                history,
+                currency_value,
+                active_ask_ledger,
+            ),
+            inputs=[ledger_state, ask_question, ask_chatbot, currency],
+            outputs=[ask_chatbot, ask_question],
+        )
+        ask_clear.click(
+            fn=lambda: (initial_ask_chat(), ""),
+            outputs=[ask_chatbot, ask_question],
         )
 
     return demo
@@ -942,3 +1026,34 @@ def ask_ledger(
     answer = result.get("answer") or "No answer available."
     model_used = result.get("model_used", "unknown")
     return f"### Ask My Ledger\n{answer}\n\n<small>Answer: {model_used}</small>"
+
+
+def initial_ask_chat() -> ChatHistory:
+    return [
+        {
+            "role": "assistant",
+            "content": "Ask me about dues, follow-ups, spending, or today’s cash position after you add ledger rows.",
+        }
+    ]
+
+
+def ask_ledger_chat(
+    state: list[dict[str, Any]] | None,
+    question: str,
+    history: ChatHistory | None,
+    currency: str,
+    ask_ledger_fn: AskLedgerFn,
+) -> tuple[ChatHistory, str]:
+    clean_question = (question or "").strip()
+    next_history: ChatHistory = list(history or initial_ask_chat())
+    if not clean_question:
+        next_history.append({"role": "assistant", "content": "Ask a question first, then I’ll answer from the ledger rows."})
+        return next_history, ""
+
+    rows = state or []
+    result = ask_ledger_fn(rows, clean_question, currency or "LKR")
+    answer = result.get("answer") or "No answer available."
+    model_used = result.get("model_used", "unknown")
+    next_history.append({"role": "user", "content": clean_question})
+    next_history.append({"role": "assistant", "content": f"{answer}\n\nAnswer source: {model_used}"})
+    return next_history, ""

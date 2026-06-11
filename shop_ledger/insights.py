@@ -8,8 +8,11 @@ import plotly.graph_objects as go
 
 
 PALETTE = {
-    "bg": "rgba(8, 12, 18, 0)",
-    "grid": "rgba(157, 177, 154, 0.18)",
+    "bg": "#080c12",
+    "plot": "#0b1017",
+    "panel": "#10151d",
+    "grid": "rgba(157, 177, 154, 0.16)",
+    "axis": "rgba(243, 244, 236, 0.58)",
     "ink": "#f3f4ec",
     "muted": "#a8b3a5",
     "green": "#8bdc8b",
@@ -523,13 +526,14 @@ def timeline_figure(rows: list[dict[str, Any]]) -> go.Figure:
             x=labels,
             y=values,
             marker={"color": colors},
+            marker_line={"color": "rgba(243, 244, 236, 0.28)", "width": 1},
             text=[event["badge"] for event in events],
             textposition="auto",
             hovertext=hover,
             hovertemplate="%{hovertext}<extra></extra>",
         )
     )
-    figure.add_hline(y=0, line_color=PALETTE["grid"])
+    figure.add_hline(y=0, line_color="rgba(243, 244, 236, 0.28)", line_width=1)
     return figure
 
 
@@ -542,16 +546,50 @@ def build_tables(
 def base_figure(title: str, subtitle: str = "") -> go.Figure:
     figure = go.Figure()
     figure.update_layout(
-        title={"text": title if not subtitle else f"{title}<br><sup>{subtitle}</sup>", "x": 0.02, "xanchor": "left"},
+        title={
+            "text": title if not subtitle else f"{title}<br><sup>{subtitle}</sup>",
+            "x": 0.02,
+            "xanchor": "left",
+            "font": {"size": 17, "color": PALETTE["ink"]},
+        },
         paper_bgcolor=PALETTE["bg"],
-        plot_bgcolor="rgba(11, 16, 23, 0.72)",
-        font={"color": PALETTE["ink"], "family": "Inter, ui-sans-serif, system-ui, sans-serif"},
-        margin={"l": 42, "r": 22, "t": 74, "b": 44},
-        height=326,
-        legend={"orientation": "h", "y": -0.24, "x": 0},
+        plot_bgcolor=PALETTE["plot"],
+        font={"color": PALETTE["ink"], "family": "Inter, ui-sans-serif, system-ui, sans-serif", "size": 12},
+        margin={"l": 48, "r": 24, "t": 78, "b": 48},
+        height=350,
+        legend={
+            "orientation": "h",
+            "y": -0.22,
+            "x": 0,
+            "font": {"color": PALETTE["muted"], "size": 11},
+            "bgcolor": "rgba(8, 12, 18, 0)",
+        },
+        hoverlabel={
+            "bgcolor": "#10151d",
+            "bordercolor": "rgba(157, 177, 154, 0.32)",
+            "font": {"color": PALETTE["ink"], "size": 12},
+        },
+        bargap=0.34,
+        transition={"duration": 240, "easing": "cubic-in-out"},
     )
-    figure.update_xaxes(gridcolor=PALETTE["grid"], zerolinecolor=PALETTE["grid"])
-    figure.update_yaxes(gridcolor=PALETTE["grid"], zerolinecolor=PALETTE["grid"])
+    figure.update_xaxes(
+        gridcolor=PALETTE["grid"],
+        zerolinecolor=PALETTE["grid"],
+        linecolor="rgba(157, 177, 154, 0.22)",
+        tickfont={"color": PALETTE["axis"], "size": 11},
+        title_font={"color": PALETTE["muted"], "size": 11},
+        ticks="outside",
+        tickcolor="rgba(157, 177, 154, 0.22)",
+    )
+    figure.update_yaxes(
+        gridcolor=PALETTE["grid"],
+        zerolinecolor=PALETTE["grid"],
+        linecolor="rgba(157, 177, 154, 0.22)",
+        tickfont={"color": PALETTE["axis"], "size": 11},
+        title_font={"color": PALETTE["muted"], "size": 11},
+        ticks="outside",
+        tickcolor="rgba(157, 177, 154, 0.22)",
+    )
     return figure
 
 
@@ -587,7 +625,8 @@ def due_by_party_figure(rows: list[dict[str, Any]]) -> go.Figure:
             x=list(values),
             y=list(parties),
             orientation="h",
-            marker={"color": PALETTE["gold"]},
+            marker={"color": PALETTE["gold"], "line": {"color": "rgba(243, 244, 236, 0.22)", "width": 1}},
+            opacity=0.94,
             text=[money(value, currency) for value in values],
             textposition="auto",
             hovertemplate="%{y}<br>%{text}<extra></extra>",
@@ -612,7 +651,11 @@ def expense_category_figure(rows: list[dict[str, Any]]) -> go.Figure:
         go.Bar(
             x=list(categories),
             y=list(values),
-            marker={"color": [PALETTE["red"], PALETTE["gold"], PALETTE["blue"], PALETTE["violet"]] * 2},
+            marker={
+                "color": [PALETTE["red"], PALETTE["gold"], PALETTE["blue"], PALETTE["violet"]] * 2,
+                "line": {"color": "rgba(243, 244, 236, 0.22)", "width": 1},
+            },
+            opacity=0.94,
             text=[money(value, currency) for value in values],
             textposition="auto",
             hovertemplate="%{x}<br>%{text}<extra></extra>",
@@ -639,8 +682,24 @@ def cashflow_figure(rows: list[dict[str, Any]]) -> go.Figure:
     income_values = [income[day] for day in days]
     expense_values = [-expense[day] for day in days]
     net_values = [income[day] - expense[day] for day in days]
-    figure.add_trace(go.Bar(name="Cash in", x=labels, y=income_values, marker={"color": PALETTE["green"]}))
-    figure.add_trace(go.Bar(name="Cash out", x=labels, y=expense_values, marker={"color": PALETTE["red"]}))
+    figure.add_trace(
+        go.Bar(
+            name="Cash in",
+            x=labels,
+            y=income_values,
+            marker={"color": PALETTE["green"], "line": {"color": "rgba(243, 244, 236, 0.18)", "width": 1}},
+            opacity=0.92,
+        )
+    )
+    figure.add_trace(
+        go.Bar(
+            name="Cash out",
+            x=labels,
+            y=expense_values,
+            marker={"color": PALETTE["red"], "line": {"color": "rgba(243, 244, 236, 0.18)", "width": 1}},
+            opacity=0.92,
+        )
+    )
     figure.add_trace(
         go.Scatter(
             name="Net",
@@ -648,6 +707,7 @@ def cashflow_figure(rows: list[dict[str, Any]]) -> go.Figure:
             y=net_values,
             mode="lines+markers",
             line={"color": PALETTE["blue"], "width": 3},
+            marker={"size": 9, "color": PALETTE["blue"], "line": {"color": PALETTE["bg"], "width": 2}},
             hovertemplate=f"%{{x}}<br>{currency} %{{y:,.0f}}<extra></extra>",
         )
     )
@@ -664,7 +724,8 @@ def confidence_review_figure(rows: list[dict[str, Any]]) -> go.Figure:
         go.Bar(
             x=labels,
             y=values,
-            marker={"color": colors},
+            marker={"color": colors, "line": {"color": "rgba(243, 244, 236, 0.22)", "width": 1}},
+            opacity=0.94,
             text=[f"{value:.0%}" for value in values],
             textposition="auto",
             hovertext=[row.get("item") or "ledger item" for row in rows],
@@ -685,8 +746,12 @@ def category_mix_figure(rows: list[dict[str, Any]]) -> go.Figure:
             labels=[item["category"] for item in breakdown[:8]],
             values=[item["total"] for item in breakdown[:8]],
             hole=0.55,
-            marker={"colors": [PALETTE["green"], PALETTE["gold"], PALETTE["blue"], PALETTE["red"], PALETTE["violet"]]},
+            marker={
+                "colors": [PALETTE["green"], PALETTE["gold"], PALETTE["blue"], PALETTE["red"], PALETTE["violet"]],
+                "line": {"color": PALETTE["bg"], "width": 2},
+            },
             textinfo="label+percent",
+            textfont={"color": PALETTE["ink"], "size": 12},
             hovertemplate="%{label}<br>%{value:,.0f}<extra></extra>",
         )
     )
@@ -714,7 +779,8 @@ def party_exposure_figure(rows: list[dict[str, Any]]) -> go.Figure:
             name="Total",
             x=parties,
             y=[totals[party] for party in parties],
-            marker={"color": PALETTE["blue"]},
+            marker={"color": PALETTE["blue"], "line": {"color": "rgba(243, 244, 236, 0.18)", "width": 1}},
+            opacity=0.92,
             hovertemplate=f"%{{x}}<br>{currency} %{{y:,.0f}} total<extra></extra>",
         )
     )
@@ -723,7 +789,8 @@ def party_exposure_figure(rows: list[dict[str, Any]]) -> go.Figure:
             name="Due",
             x=parties,
             y=[due[party] for party in parties],
-            marker={"color": PALETTE["gold"]},
+            marker={"color": PALETTE["gold"], "line": {"color": "rgba(243, 244, 236, 0.18)", "width": 1}},
+            opacity=0.92,
             hovertemplate=f"%{{x}}<br>{currency} %{{y:,.0f}} due<extra></extra>",
         )
     )

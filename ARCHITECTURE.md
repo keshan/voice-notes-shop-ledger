@@ -171,8 +171,8 @@ Top area:
 
 Tabs:
 
-- `Dashboard`: KPIs, chart director, dynamic Plotly graphs, field
-  intelligence, Gemma daily brief, Ask My Ledger, category and party
+- `Dashboard`: KPIs, chart director, themed Plotly graph wall, field
+  intelligence, Gemma daily brief, full Ask My Ledger chat, category and party
   breakdowns.
 - `Automation Queue`: follow-up actions, reminder cadence, and reply studio
   message variants.
