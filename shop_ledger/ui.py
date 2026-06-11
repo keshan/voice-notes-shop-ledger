@@ -9,7 +9,9 @@ import gradio as gr
 import pandas as pd
 
 from shop_ledger.insights import (
+    build_chart_markdown,
     build_dashboard_markdown,
+    build_insight_figures,
     build_insights_markdown,
     build_reminder_markdown,
     build_tables,
@@ -108,6 +110,10 @@ CSS = """
   padding: 8px 12px;
 }
 
+#status-strip .prose {
+  margin: 0;
+}
+
 #input-dock,
 #output-dock {
   border: 1px solid var(--ledger-line);
@@ -183,6 +189,43 @@ button.primary {
   margin-top: 6px;
 }
 
+.command-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.9fr) minmax(360px, 1.6fr);
+  gap: 12px;
+  align-items: stretch;
+}
+
+.ops-card {
+  border: 1px solid var(--ledger-line);
+  background: rgba(8, 12, 18, 0.88);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+#chart-director {
+  min-height: 180px;
+  border-left: 4px solid var(--ledger-blue);
+}
+
+#chart-wall {
+  border: 1px solid var(--ledger-line);
+  background: rgba(8, 12, 18, 0.72);
+  border-radius: 8px;
+  padding: 10px;
+}
+
+#chart-wall .block,
+#signal-row .block {
+  background: rgba(8, 12, 18, 0.28) !important;
+  border-color: rgba(157, 177, 154, 0.14) !important;
+  border-radius: 8px !important;
+}
+
+#signal-row {
+  margin-top: 10px;
+}
+
 .followup-card {
   background: rgba(8, 12, 18, 0.88);
   border: 1px solid var(--ledger-line);
@@ -214,6 +257,10 @@ button.primary {
 
 @media (max-width: 760px) {
   .metric-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .command-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -277,8 +324,18 @@ def build_demo(process_fn: ProcessFn | None = None) -> gr.Blocks:
 
         with gr.Tabs():
             with gr.Tab("Dashboard"):
-                dashboard = gr.Markdown(build_dashboard_markdown([]), elem_id="dashboard-panel")
-                insights = gr.Markdown(build_insights_markdown([]), elem_id="insight-panel")
+                with gr.Row(elem_id="dashboard-panel"):
+                    dashboard = gr.Markdown(build_dashboard_markdown([]))
+                with gr.Row(elem_classes=["command-grid"]):
+                    with gr.Column(elem_id="chart-director", elem_classes=["ops-card"]):
+                        chart_director = gr.Markdown(build_chart_markdown([]))
+                        insights = gr.Markdown(build_insights_markdown([]))
+                    with gr.Column(elem_id="chart-wall"):
+                        primary_chart, secondary_chart, tertiary_chart = build_insight_figures([])
+                        primary_plot = gr.Plot(value=primary_chart, label="Insight graph")
+                        with gr.Row(elem_id="signal-row"):
+                            secondary_plot = gr.Plot(value=secondary_chart, label="Cash trail")
+                            tertiary_plot = gr.Plot(value=tertiary_chart, label="People ledger")
                 with gr.Row():
                     category_table = gr.Dataframe(
                         headers=["category", "total", "display"],
@@ -343,6 +400,10 @@ def build_demo(process_fn: ProcessFn | None = None) -> gr.Blocks:
                 input_choice,
                 input_notice,
                 dashboard,
+                chart_director,
+                primary_plot,
+                secondary_plot,
+                tertiary_plot,
                 insights,
                 automation,
                 category_table,
@@ -365,6 +426,10 @@ def build_demo(process_fn: ProcessFn | None = None) -> gr.Blocks:
                 input_choice,
                 input_notice,
                 dashboard,
+                chart_director,
+                primary_plot,
+                secondary_plot,
+                tertiary_plot,
                 insights,
                 automation,
                 category_table,
@@ -545,10 +610,15 @@ def write_csv(rows: list[dict[str, Any]]) -> str:
     return handle.name
 
 
-def render_intelligence(rows: list[dict[str, Any]]) -> tuple[str, str, str, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+def render_intelligence(rows: list[dict[str, Any]]) -> tuple[Any, ...]:
     categories, parties, followups = build_tables(rows)
+    primary_chart, secondary_chart, tertiary_chart = build_insight_figures(rows)
     return (
         build_dashboard_markdown(rows),
+        build_chart_markdown(rows),
+        primary_chart,
+        secondary_chart,
+        tertiary_chart,
         build_insights_markdown(rows),
         build_reminder_markdown(rows),
         pd.DataFrame(categories, columns=["category", "total", "display"]),

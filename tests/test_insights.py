@@ -1,6 +1,6 @@
 import unittest
 
-from shop_ledger.insights import compute_metrics, followup_rows, risk_flags
+from shop_ledger.insights import build_chart_plan, build_insight_figures, compute_metrics, followup_rows, risk_flags
 
 
 ROWS = [
@@ -46,6 +46,18 @@ class InsightTests(unittest.TestCase):
         flags = risk_flags(ROWS)
 
         self.assertTrue(any("High-value due item" in flag for flag in flags))
+
+    def test_chart_plan_prioritizes_due_followups(self):
+        plan = build_chart_plan(ROWS)
+
+        self.assertEqual(plan["chart"], "due_by_party")
+        self.assertIn("unpaid", plan["question"].lower())
+
+    def test_insight_figures_return_plotly_figures(self):
+        figures = build_insight_figures(ROWS)
+
+        self.assertEqual(len(figures), 3)
+        self.assertTrue(all(hasattr(figure, "to_plotly_json") for figure in figures))
 
 
 if __name__ == "__main__":

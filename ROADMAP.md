@@ -8,8 +8,12 @@ theme while pushing the demo toward a more modern, world-class experience.
 
 ### 1. Dynamic Insight Graphs
 
+Status: shipped in the first enhancement sprint.
+
 Generate charts based on the ledger rows and the current question the app thinks
-is most important.
+is most important. The app now has a deterministic chart planner and Plotly
+graphs for due radar, spend pressure, cashflow, confidence review, category mix,
+and people exposure.
 
 Examples:
 
@@ -18,14 +22,21 @@ Examples:
 - If many rows exist across dates: show cashflow over time.
 - If confidence is low: show a review queue chart.
 
-Implementation path:
+Implemented path:
 
-- Add a chart planner in `shop_ledger/insights.py`.
-- Let the deterministic rules pick a chart first.
+- Added a chart planner in `shop_ledger/insights.py`.
+- Let deterministic rules pick a chart first.
+- Rendered charts with Gradio `Plot` and Plotly.
+
+Future path:
+
 - Optionally ask the local LLM to choose between safe chart specs.
-- Render charts with Gradio `Plot` and pandas/matplotlib or plotly.
+- Add user-selectable chart questions such as "who owes me most?" or "what is
+  eating cash?"
 
 ### 2. Ledger Command Center Layout
+
+Status: partly shipped in the first enhancement sprint.
 
 Rearrange the UI into a more modern operational console:
 
@@ -34,8 +45,9 @@ Rearrange the UI into a more modern operational console:
 - Right rail: follow-up queue and risk alerts.
 - Bottom: raw ledger table.
 
-This would make the app feel less like a form and more like a live financial
-desk.
+The dashboard now has a command-center graph wall and chart director. Next, the
+input area and automation queue can be reorganized into a true three-rail
+console.
 
 ### 3. LLM-Generated Daily Brief
 

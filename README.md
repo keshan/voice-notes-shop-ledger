@@ -27,6 +27,8 @@ for a real person who keeps money notes in scraps, voice messages, or memory.
   confidence.
 - See a live dashboard for net cash, cash in, cash out, due amount, follow-ups,
   and average extraction confidence.
+- Let the app pick an insight graph based on the ledger state: unpaid dues,
+  expense pressure, cashflow over time, confidence review, or category mix.
 - Review field intelligence: top category, most active party, biggest entry,
   watch-list risks, and a daily field note.
 - Use the automation queue to turn due items into follow-up actions, reminder
@@ -108,6 +110,9 @@ The app reads these environment variables:
 | `LLAMA_N_CTX` | llama.cpp context window, `2048` on Modal |
 | `WHISPER_MODEL_SIZE` | Optional faster-whisper model size, defaults to `tiny` |
 
+The Gradio dashboard uses Plotly figures, so Modal installs `plotly>=6.0,<7`
+inside the same image as the UI.
+
 ## Model Notes
 
 The configured Modal model is
@@ -123,7 +128,8 @@ not as a hosted inference API.
 
 1. Add a messy text or voice note.
 2. Show the clean ledger row.
-3. Open the dashboard and point to net cash, due amount, and risk flags.
+3. Open the dashboard and point to net cash, due amount, and the graph the app
+   chose for the current ledger.
 4. Open the automation queue and copy a follow-up script.
 5. Export the CSV.
 

@@ -58,6 +58,8 @@ Dashboard, ledger table, automation queue, CSV export
    - ledger table
    - dashboard metrics
    - field intelligence
+   - dynamic insight graph plan
+   - Plotly insight figures
    - automation queue
    - category and party tables
    - CSV export
@@ -128,11 +130,16 @@ the reason.
 - top parties
 - high-value due risk flags
 - low-confidence risk flags
+- chart plan selection
+- Plotly figures for due radar, spend pressure, cashflow, confidence review,
+  category mix, and party exposure
 - follow-up queue with cadence and scripts
 - daily field note
 
-Keeping insights separate from the Gradio UI makes the dashboard testable and
-keeps the app ready for future charting or LLM-selected visualizations.
+The chart planner is deterministic first. It asks what matters most right now:
+unpaid money, expense pressure, cashflow timeline, review risk, or overall
+category mix. Keeping insights separate from the Gradio UI makes the dashboard
+testable and leaves room for a later local-LLM chart selector.
 
 ## UI Structure
 
@@ -149,7 +156,8 @@ Top area:
 
 Tabs:
 
-- `Dashboard`: KPIs, field intelligence, category and party breakdowns.
+- `Dashboard`: KPIs, chart director, dynamic Plotly graphs, field
+  intelligence, category and party breakdowns.
 - `Automation Queue`: follow-up actions, reminder cadence, message scripts.
 - `Ledger`: raw ledger rows and CSV export.
 
@@ -186,6 +194,8 @@ Current tests cover:
 - text/audio input-choice rules
 - field-clearing callback behavior
 - dashboard metrics
+- chart-plan selection
+- Plotly figure generation
 - follow-up queue priority
 - risk flags
 

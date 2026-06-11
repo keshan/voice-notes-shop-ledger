@@ -24,6 +24,7 @@ image = (
         "gradio>=5.5,<6",
         "huggingface-hub>=0.36,<1",
         "pandas>=2.2,<3",
+        "plotly>=6.0,<7",
         "pydantic>=2.9,<3",
         "faster-whisper>=1.1,<2",
     )
