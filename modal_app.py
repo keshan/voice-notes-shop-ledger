@@ -25,6 +25,8 @@ image = (
         "huggingface-hub>=0.36,<1",
         "pandas>=2.2,<3",
         "plotly>=6.0,<7",
+        "PyMuPDF>=1.24,<2",
+        "Pillow>=10,<12",
         "pydantic>=2.9,<3",
         "faster-whisper>=1.1,<2",
     )
@@ -83,8 +85,8 @@ class LedgerAgent:
         self.processor = LedgerProcessor.from_env()
 
     @modal.method()
-    def process(self, note: str, currency: str = "LKR") -> dict:
-        result = self.processor.process(note, currency=currency)
+    def process(self, note: str, currency: str = "LKR", image_urls: list[str] | None = None) -> dict:
+        result = self.processor.process(note, currency=currency, image_urls=image_urls)
         return result.model_dump(mode="json")
 
 
@@ -119,8 +121,8 @@ def fastapi_app():
 
     web_app = FastAPI(title="Voice Notes to Shop Ledger")
 
-    def process_remote(note: str, currency: str) -> dict:
-        return LedgerAgent().process.remote(note, currency)
+    def process_remote(note: str, currency: str, image_urls: list[str] | None = None) -> dict:
+        return LedgerAgent().process.remote(note, currency, image_urls)
 
     demo = build_demo(process_fn=process_remote)
     return mount_gradio_app(app=web_app, blocks=demo, path="/")

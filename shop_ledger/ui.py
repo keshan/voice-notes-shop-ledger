@@ -17,10 +17,10 @@ from shop_ledger.insights import (
     build_review_markdown,
     build_tables,
 )
-from shop_ledger.processor import LedgerProcessor, transcribe_audio
+from shop_ledger.processor import LedgerProcessor, prepare_document_input, transcribe_audio
 
 
-ProcessFn = Callable[[str, str], dict[str, Any]]
+ProcessFn = Callable[[str, str, list[str] | None], dict[str, Any]]
 
 COLUMNS = [
     "date",
@@ -312,8 +312,8 @@ button.primary {
 def build_demo(process_fn: ProcessFn | None = None) -> gr.Blocks:
     processor = LedgerProcessor.from_env()
 
-    def local_process(note: str, currency: str) -> dict[str, Any]:
-        return processor.process(note, currency=currency).model_dump(mode="json")
+    def local_process(note: str, currency: str, image_urls: list[str] | None = None) -> dict[str, Any]:
+        return processor.process(note, currency=currency, image_urls=image_urls).model_dump(mode="json")
 
     active_process = process_fn or local_process
 
@@ -344,9 +344,14 @@ def build_demo(process_fn: ProcessFn | None = None) -> gr.Blocks:
                     lines=6,
                 )
                 audio_box = gr.Audio(label="Voice note", sources=["microphone", "upload"], type="filepath")
+                document_box = gr.File(
+                    label="Receipt, bill, or note image",
+                    file_types=[".pdf", ".png", ".jpg", ".jpeg", ".webp", ".tif", ".tiff", ".bmp", ".txt", ".csv"],
+                    type="filepath",
+                )
                 input_choice = gr.Radio(
                     label="Input to analyze",
-                    choices=["Auto", "Text note", "Voice note"],
+                    choices=["Auto", "Text note", "Voice note", "Document"],
                     value="Auto",
                     interactive=True,
                 )
@@ -440,15 +445,16 @@ def build_demo(process_fn: ProcessFn | None = None) -> gr.Blocks:
         )
 
         add_button.click(
-            fn=lambda note, audio, source_choice, currency_value, state: add_to_ledger(
+            fn=lambda note, audio, document, source_choice, currency_value, state: add_to_ledger(
                 note,
                 audio,
+                document,
                 source_choice,
                 currency_value,
                 state,
                 active_process,
             ),
-            inputs=[note_box, audio_box, input_choice, currency, ledger_state],
+            inputs=[note_box, audio_box, document_box, input_choice, currency, ledger_state],
             outputs=[
                 ledger,
                 summary,
@@ -459,6 +465,7 @@ def build_demo(process_fn: ProcessFn | None = None) -> gr.Blocks:
                 ledger_state,
                 note_box,
                 audio_box,
+                document_box,
                 input_choice,
                 input_notice,
                 dashboard,
@@ -487,6 +494,7 @@ def build_demo(process_fn: ProcessFn | None = None) -> gr.Blocks:
                 ledger_state,
                 note_box,
                 audio_box,
+                document_box,
                 input_choice,
                 input_notice,
                 dashboard,
@@ -510,13 +518,14 @@ def build_demo(process_fn: ProcessFn | None = None) -> gr.Blocks:
 def add_to_ledger(
     note: str,
     audio_path: str | None,
+    document_path: Any,
     source_choice: str,
     currency: str,
     state: list[dict[str, Any]] | None,
     process_fn: ProcessFn,
 ) -> tuple[Any, ...]:
     rows = state or []
-    choice = choose_input(note, audio_path, source_choice)
+    choice = choose_input(note, audio_path, document_path, source_choice)
     if choice["status"] != "ready":
         frame = pd.DataFrame(rows, columns=COLUMNS)
         return (
@@ -530,12 +539,14 @@ def add_to_ledger(
             gr.update(),
             gr.update(),
             gr.update(),
+            gr.update(),
             choice["notice"],
             *render_intelligence(rows),
         )
 
     if choice["source"] == "audio":
         combined_note = transcribe_audio(audio_path)
+        image_urls = None
         if not combined_note:
             frame = pd.DataFrame(rows, columns=COLUMNS)
             return (
@@ -548,14 +559,37 @@ def add_to_ledger(
                 rows,
                 gr.update(),
                 gr.update(),
+                gr.update(),
                 gr.update(value="Voice note"),
                 "I could not transcribe that voice note. Try another recording or paste the note.",
                 *render_intelligence(rows),
             )
+    elif choice["source"] == "document":
+        document = prepare_document_input(document_path)
+        combined_note = build_document_prompt(document)
+        image_urls = document.get("image_urls") or None
+        if not combined_note and not image_urls:
+            frame = pd.DataFrame(rows, columns=COLUMNS)
+            return (
+                frame,
+                build_summary(rows, {}),
+                build_reminders(rows, {}),
+                "Model: waiting for document text",
+                f"Rows: {len(rows)}",
+                write_csv(rows) if rows else None,
+                rows,
+                gr.update(),
+                gr.update(),
+                gr.update(),
+                gr.update(value="Document"),
+                "I could not prepare that document. Try a PDF, receipt image, or pasted note.",
+                *render_intelligence(rows),
+            )
     else:
         combined_note = (note or "").strip()
+        image_urls = None
 
-    result = process_fn(combined_note, currency or "LKR")
+    result = process_fn(combined_note, currency or "LKR", image_urls)
     rows = rows + compact_rows(result.get("entries", []))
 
     frame = pd.DataFrame(rows, columns=COLUMNS)
@@ -566,6 +600,7 @@ def add_to_ledger(
     notice = f"Added {len(result.get('entries', []))} row(s) from the {choice['label'].lower()}."
     next_note = gr.update(value="") if choice["source"] == "text" else gr.update()
     next_audio = gr.update(value=None) if choice["source"] == "audio" else gr.update()
+    next_document = gr.update(value=None) if choice["source"] == "document" else gr.update()
 
     return (
         frame,
@@ -577,31 +612,59 @@ def add_to_ledger(
         rows,
         next_note,
         next_audio,
+        next_document,
         gr.update(value="Auto"),
         notice,
         *render_intelligence(rows),
     )
 
 
-def choose_input(note: str | None, audio_path: str | None, source_choice: str | None) -> dict[str, str]:
+def choose_input(note: str | None, audio_path: str | None, document_path: Any, source_choice: str | None) -> dict[str, str]:
     has_text = bool((note or "").strip())
     has_audio = bool(audio_path)
+    has_document = bool(document_path)
     choice = source_choice or "Auto"
+    present = [
+        label
+        for label, exists in (
+            ("written note", has_text),
+            ("voice note", has_audio),
+            ("document", has_document),
+        )
+        if exists
+    ]
 
-    if has_text and has_audio and choice == "Auto":
+    if len(present) > 1 and choice == "Auto":
         return {
             "status": "conflict",
-            "notice": "Both a written note and a voice note are present. Choose Text note or Voice note, then add it to the ledger.",
+            "notice": f"Multiple inputs are present ({', '.join(present)}). Choose Text note, Voice note, or Document, then add it to the ledger.",
         }
     if choice == "Text note" and not has_text:
         return {"status": "missing", "notice": "Text note is selected, but the written note is empty."}
     if choice == "Voice note" and not has_audio:
         return {"status": "missing", "notice": "Voice note is selected, but no audio is attached."}
-    if not has_text and not has_audio:
-        return {"status": "missing", "notice": "Add a written note or record a voice note first."}
+    if choice == "Document" and not has_document:
+        return {"status": "missing", "notice": "Document is selected, but no file is attached."}
+    if not has_text and not has_audio and not has_document:
+        return {"status": "missing", "notice": "Add a written note, record a voice note, or upload a document first."}
     if choice == "Voice note" or (choice == "Auto" and has_audio):
         return {"status": "ready", "source": "audio", "label": "Voice note"}
+    if choice == "Document" or (choice == "Auto" and has_document):
+        return {"status": "ready", "source": "document", "label": "Document"}
     return {"status": "ready", "source": "text", "label": "Text note"}
+
+
+def build_document_prompt(document: dict[str, Any]) -> str:
+    kind = document.get("kind") or "document"
+    page_count = document.get("page_count") or 0
+    text = str(document.get("text") or "").strip()
+    parts = [
+        f"Uploaded {kind} with {page_count} page/image(s).",
+        "Extract shop ledger entries from the visible document content.",
+    ]
+    if text:
+        parts.append(f"Text extracted from the document:\n{text}")
+    return "\n".join(parts).strip()
 
 
 def compact_rows(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -722,6 +785,7 @@ def clear_ledger() -> tuple[Any, ...]:
         None,
         [],
         "",
+        None,
         None,
         "Auto",
         "Ready for one note.",

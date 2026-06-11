@@ -10,7 +10,7 @@ from shop_ledger.heuristics import heuristic_extract
 from shop_ledger.schema import LedgerResult
 
 
-SYSTEM_PROMPT = """You turn messy shopkeeper notes into a clean ledger.
+SYSTEM_PROMPT = """You turn messy shopkeeper notes, receipts, bills, and ledger images into a clean ledger.
 Return only valid JSON with this exact shape:
 {
   "entries": [
@@ -34,7 +34,8 @@ Return only valid JSON with this exact shape:
   "questions": ["only ask if an amount, person, or due date is unclear"],
   "cleaned_note": "normalized note"
 }
-Use the user's currency. Do not invent amounts. Split multiple transactions into multiple entries."""
+Use the user's currency. Do not invent amounts. Split multiple transactions into multiple entries.
+For images, read visible receipt/bill/note text and infer only clear ledger facts."""
 
 
 class LlamaLedgerBackend:
@@ -71,17 +72,25 @@ class LlamaLedgerBackend:
             verbose=False,
         )
 
-    def extract(self, note: str, currency: str = "LKR") -> LedgerResult:
+    def extract(self, note: str, currency: str = "LKR", image_urls: list[str] | None = None) -> LedgerResult:
         if not self.available:
             return heuristic_extract(note, currency=currency)
 
         self.load()
         assert self._llm is not None
+        image_urls = image_urls or []
+        user_content: str | list[dict[str, Any]]
+        prompt = f"Currency: {currency}\nNote or document context:\n{note or 'Read the uploaded document image(s).'}"
+        if image_urls:
+            user_content = [{"type": "text", "text": prompt}]
+            user_content.extend({"type": "image_url", "image_url": {"url": image_url}} for image_url in image_urls)
+        else:
+            user_content = prompt
 
         response = self._llm.create_chat_completion(
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": f"Currency: {currency}\nNote:\n{note}"},
+                {"role": "user", "content": user_content},
             ],
             max_tokens=900,
             temperature=0.1,

@@ -20,6 +20,10 @@ paid Ravi 1200 for rice bags, customer Nimal owes 750 for tea packets, remind me
 
 into ledger rows, totals, and follow-up reminders.
 
+It also accepts receipts, bills, note photos, and PDFs. PDFs are rendered into
+page images locally, and Gemma reads the document visually through llama.cpp's
+multimodal chat input.
+
 The current version also adds a dashboard and automation queue:
 
 - Net cash, cash in, cash out, due amount, open follow-ups, and average

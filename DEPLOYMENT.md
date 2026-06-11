@@ -40,6 +40,7 @@ The web function and model worker are separated intentionally:
 | Model file | `gemma-4-12b-it-UD-Q4_K_XL.gguf` | Good quality/performance quant for the hackathon demo. |
 | Runtime | `llama-cpp-python` CUDA wheel | Avoids source-building llama.cpp during deploy. |
 | Charts | `plotly>=6.0,<7` | Renders dynamic Gradio `Plot` dashboards. |
+| Documents | PyMuPDF + Pillow + Gemma vision | Renders PDFs/images locally, then sends data URLs to llama.cpp multimodal chat. |
 | GPU layers | `LLAMA_N_GPU_LAYERS=-1` | Offload all possible layers to GPU. |
 | Context | `LLAMA_N_CTX=2048` | Keeps ledger extraction responsive. |
 
@@ -142,6 +143,8 @@ Useful signals:
   that did not match the schema.
 - Blank charts usually mean Plotly is missing from the image or the deployed UI
   has not been refreshed after a code push.
+- Empty document extraction usually means the uploaded file type was unsupported
+  or multimodal llama.cpp inference failed.
 
 ## Local Development
 

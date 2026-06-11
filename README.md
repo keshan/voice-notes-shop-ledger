@@ -23,6 +23,8 @@ for a real person who keeps money notes in scraps, voice messages, or memory.
 
 - Paste messy notes such as `paid Ravi 1200 for rice bags, remind me Friday`.
 - Record or upload a voice note; optional local Whisper transcription handles it.
+- Upload receipts, bills, note photos, or PDFs; PDFs are rendered to page
+  images and Gemma reads the visual document content through llama.cpp.
 - Extract structured ledger rows with amount, party, item, category, status, and
   confidence.
 - See a live dashboard for net cash, cash in, cash out, due amount, follow-ups,
@@ -115,6 +117,10 @@ The app reads these environment variables:
 The Gradio dashboard uses Plotly figures, so Modal installs `plotly>=6.0,<7`
 inside the same image as the UI.
 
+Document upload stays off-grid too: PDFs are rendered with PyMuPDF, images are
+encoded as local data URLs, and Gemma 4 12B receives them through llama.cpp's
+multimodal `image_url` chat message format.
+
 ## Model Notes
 
 The configured Modal model is
@@ -129,7 +135,7 @@ not as a hosted inference API.
 ## Demo Flow
 
 1. Add a messy text or voice note.
-2. Show the clean ledger row.
+2. Upload a receipt/photo/PDF and show it entering the same ledger flow.
 3. Open the dashboard and point to net cash, due amount, and the graph the app
    chose for the current ledger.
 4. Open the automation queue and choose a polite, friendly, or firm follow-up

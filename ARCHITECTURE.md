@@ -6,7 +6,7 @@ notes into structured ledger rows, insights, and follow-up actions.
 ## System Overview
 
 ```text
-User text/audio
+User text/audio/document
     |
     v
 Gradio UI (`shop_ledger/ui.py`)
@@ -45,16 +45,21 @@ Dashboard, ledger table, automation queue, CSV export
 
 ## Data Flow
 
-1. The user enters a written note or records/uploads a voice note.
-2. If both are present and `Auto` is selected, the UI asks the user to choose
-   which input to analyze.
+1. The user enters a written note, records/uploads a voice note, or uploads a
+   receipt/bill image or PDF.
+2. If multiple inputs are present and `Auto` is selected, the UI asks the user
+   to choose which input to analyze.
 3. Audio input is transcribed locally with `faster-whisper` when available.
-4. The chosen note is sent to `LedgerProcessor`.
-5. In Modal production, `LedgerProcessor` uses `LlamaLedgerBackend`.
-6. `LlamaLedgerBackend` asks Gemma through llama.cpp to return strict JSON.
-7. The result is validated by `LedgerResult` and `LedgerEntry`.
-8. Rows are appended to Gradio state.
-9. The app recomputes:
+4. Documents are prepared locally: PDFs are rendered into page images with
+   PyMuPDF, uploaded images are resized with Pillow, and both become base64
+   data URLs.
+5. The chosen note text is sent to `LedgerProcessor`.
+6. In Modal production, `LedgerProcessor` uses `LlamaLedgerBackend`.
+7. `LlamaLedgerBackend` asks Gemma through llama.cpp to return strict JSON,
+   using multimodal `image_url` message parts when document images are present.
+8. The result is validated by `LedgerResult` and `LedgerEntry`.
+9. Rows are appended to Gradio state.
+10. The app recomputes:
    - ledger table
    - dashboard metrics
    - field intelligence
@@ -64,7 +69,7 @@ Dashboard, ledger table, automation queue, CSV export
    - review queue
    - category and party tables
    - CSV export
-10. The analyzed input is cleared so the next note starts cleanly.
+11. The analyzed input is cleared so the next note starts cleanly.
 
 ## Model Contract
 
@@ -152,6 +157,7 @@ Top area:
 
 - written note
 - voice note
+- document upload
 - input selector
 - currency
 - add/clear actions
