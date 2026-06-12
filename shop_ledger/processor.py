@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from shop_ledger.heuristics import heuristic_extract
-from shop_ledger.insights import answer_ledger_question, daily_brief_fallback
+from shop_ledger.insights import CHART_SPECS, answer_ledger_question, chart_spec_from_question, daily_brief_fallback
 from shop_ledger.llama_backend import LlamaLedgerBackend
 from shop_ledger.schema import LedgerResult
 
@@ -71,6 +71,19 @@ class LedgerProcessor:
             except Exception as exc:
                 return {"answer": fallback, "model_used": f"local rules fallback ({type(exc).__name__})"}
         return {"answer": fallback, "model_used": "local rules"}
+
+    def choose_chart(self, rows: list[dict[str, Any]], question: str) -> dict[str, str]:
+        fallback = chart_spec_from_question(rows, question)
+        if self.mode == "llama" and self.backend.available and rows:
+            try:
+                spec = self.backend.choose_chart_spec(rows, question, CHART_SPECS)
+                if spec.get("chart") in CHART_SPECS:
+                    spec["model_used"] = Path(self.backend.model_path).name
+                    return spec
+            except Exception as exc:
+                fallback["model_used"] = f"local rules fallback ({type(exc).__name__})"
+                return fallback
+        return fallback
 
 
 def transcribe_audio(audio_path: str | None) -> str:

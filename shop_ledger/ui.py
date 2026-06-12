@@ -10,6 +10,7 @@ import pandas as pd
 
 from shop_ledger.insights import (
     build_chart_markdown,
+    build_chart_composer_markdown,
     build_counterparty_memory_markdown,
     build_dashboard_markdown,
     build_daily_brief_markdown,
@@ -20,6 +21,8 @@ from shop_ledger.insights import (
     build_timeline_markdown,
     build_tables,
     counterparty_memory_cards,
+    chart_spec_from_question,
+    figure_for_chart_id,
     COMMAND_ACTIONS,
     run_ledger_command,
     timeline_figure,
@@ -31,6 +34,7 @@ from shop_ledger.processor import LedgerProcessor, prepare_document_input, trans
 ProcessFn = Callable[[str, str, list[str] | None], dict[str, Any]]
 DailyBriefFn = Callable[[list[dict[str, Any]], str], dict[str, str]]
 AskLedgerFn = Callable[[list[dict[str, Any]], str, str], dict[str, str]]
+ChartComposerFn = Callable[[list[dict[str, Any]], str], dict[str, str]]
 ChatHistory = list[dict[str, str]]
 
 COLUMNS = [
@@ -292,6 +296,11 @@ button.primary {
   padding: 12px;
 }
 
+#chart-compose-row {
+  align-items: end;
+  margin-bottom: 10px;
+}
+
 .followup-card {
   background: rgba(8, 12, 18, 0.88);
   border: 1px solid var(--ledger-line);
@@ -466,6 +475,7 @@ def build_demo(
     process_fn: ProcessFn | None = None,
     daily_brief_fn: DailyBriefFn | None = None,
     ask_ledger_fn: AskLedgerFn | None = None,
+    chart_composer_fn: ChartComposerFn | None = None,
 ) -> gr.Blocks:
     processor = LedgerProcessor.from_env()
 
@@ -483,6 +493,11 @@ def build_demo(
         return processor.ask_ledger(rows, question, currency=currency)
 
     active_ask_ledger = ask_ledger_fn or local_ask_ledger
+
+    def local_chart_composer(rows: list[dict[str, Any]], question: str) -> dict[str, str]:
+        return chart_spec_from_question(rows, question)
+
+    active_chart_composer = chart_composer_fn or local_chart_composer
 
     with gr.Blocks(
         css=CSS,
@@ -548,6 +563,14 @@ def build_demo(
                         daily_brief_button = gr.Button("Generate daily brief", variant="secondary")
                         insights = gr.Markdown(build_insights_markdown([]), elem_id="insight-panel")
                     with gr.Column(elem_id="chart-wall"):
+                        with gr.Row(elem_id="chart-compose-row"):
+                            chart_question = gr.Textbox(
+                                label="Compose chart",
+                                placeholder="Show me why cash feels low today",
+                                lines=1,
+                                scale=5,
+                            )
+                            chart_compose_button = gr.Button("Compose", variant="secondary", scale=1)
                         primary_chart, secondary_chart, tertiary_chart = build_insight_figures([])
                         primary_plot = gr.Plot(value=primary_chart, label="Insight graph")
                         with gr.Row(elem_id="signal-row"):
@@ -820,6 +843,16 @@ def build_demo(
             fn=run_command_palette,
             inputs=[ledger_state, command_choice],
             outputs=[command_output],
+        )
+        chart_compose_button.click(
+            fn=lambda state, question: compose_chart(state, question, active_chart_composer),
+            inputs=[ledger_state, chart_question],
+            outputs=[chart_director, primary_plot, chart_question],
+        )
+        chart_question.submit(
+            fn=lambda state, question: compose_chart(state, question, active_chart_composer),
+            inputs=[ledger_state, chart_question],
+            outputs=[chart_director, primary_plot, chart_question],
         )
 
     return demo
@@ -1193,3 +1226,13 @@ def ask_ledger_chat(
 
 def run_command_palette(state: list[dict[str, Any]] | None, command: str) -> str:
     return run_ledger_command(state or [], command)
+
+
+def compose_chart(
+    state: list[dict[str, Any]] | None,
+    question: str,
+    chart_composer_fn: ChartComposerFn,
+) -> tuple[str, Any, str]:
+    rows = state or []
+    spec = chart_composer_fn(rows, question or "")
+    return build_chart_composer_markdown(question or "", spec), figure_for_chart_id(rows, spec.get("chart", "")), ""

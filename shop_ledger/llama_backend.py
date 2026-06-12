@@ -158,6 +158,38 @@ class LlamaLedgerBackend:
         )
         return str(response["choices"][0]["message"]["content"]).strip()
 
+    def choose_chart_spec(self, rows: list[dict[str, Any]], question: str, allowed_charts: dict[str, str]) -> dict[str, str]:
+        if not self.available:
+            return {}
+
+        self.load()
+        assert self._llm is not None
+
+        response = self._llm.create_chat_completion(
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "Choose the best chart for a small shop ledger question. "
+                        "Return only JSON with keys chart and reason. "
+                        f"Allowed chart ids: {', '.join(allowed_charts)}."
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": (
+                        f"Question: {question}\nAllowed charts: {json.dumps(allowed_charts, ensure_ascii=True)}\n"
+                        f"Rows JSON:\n{json.dumps(rows, ensure_ascii=True)}"
+                    ),
+                },
+            ],
+            max_tokens=160,
+            temperature=0.1,
+            top_p=0.9,
+        )
+        data = parse_json_object(str(response["choices"][0]["message"]["content"]))
+        return {"chart": str(data.get("chart") or ""), "reason": str(data.get("reason") or "")}
+
 
 def parse_json_object(text: str) -> dict[str, Any]:
     try:

@@ -7,6 +7,7 @@ from shop_ledger.ui import (
     ask_ledger,
     ask_ledger_chat,
     choose_input,
+    compose_chart,
     generate_daily_brief,
     initial_ask_chat,
     run_command_palette,
@@ -175,6 +176,19 @@ class InputChoiceTests(unittest.TestCase):
         output = run_command_palette(rows, "Show unpaid")
 
         self.assertIn("Nimal", output)
+
+    def test_compose_chart_returns_markdown_figure_and_clears_input(self):
+        rows = [{"payment_status": "due", "counterparty": "Nimal", "amount": 7500, "currency": "LKR"}]
+
+        markdown, figure, next_question = compose_chart(
+            rows,
+            "Who owes me?",
+            lambda supplied_rows, question: {"chart": "due_by_party", "reason": "Dues", "model_used": "fake"},
+        )
+
+        self.assertIn("Due radar", markdown)
+        self.assertTrue(hasattr(figure, "to_plotly_json"))
+        self.assertEqual(next_question, "")
 
 
 if __name__ == "__main__":

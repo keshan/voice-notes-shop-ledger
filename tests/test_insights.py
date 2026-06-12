@@ -3,12 +3,14 @@ import unittest
 from shop_ledger.insights import (
     answer_ledger_question,
     build_chart_plan,
+    build_chart_composer_markdown,
     build_counterparty_memory_markdown,
     build_daily_brief_markdown,
     build_insight_figures,
     build_timeline_markdown,
     compute_metrics,
     counterparty_memory_cards,
+    chart_spec_from_question,
     daily_brief_fallback,
     followup_rows,
     review_rows,
@@ -160,6 +162,17 @@ class InsightTests(unittest.TestCase):
 
         self.assertIn("QuickBooks", output)
         self.assertIn("Customer/Vendor", output)
+
+    def test_chart_spec_from_question_selects_expense_chart(self):
+        spec = chart_spec_from_question(ROWS, "Where did cash go?")
+
+        self.assertEqual(spec["chart"], "expense_categories")
+
+    def test_chart_composer_markdown_names_chart(self):
+        markdown = build_chart_composer_markdown("Who owes?", {"chart": "due_by_party", "reason": "Dues", "model_used": "fake"})
+
+        self.assertIn("AI Chart Composer", markdown)
+        self.assertIn("Due radar", markdown)
 
 
 if __name__ == "__main__":

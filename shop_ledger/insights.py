@@ -359,6 +359,74 @@ def build_chart_plan(rows: list[dict[str, Any]]) -> dict[str, str]:
     }
 
 
+CHART_SPECS = {
+    "due_by_party": "Due radar",
+    "expense_categories": "Spend pressure",
+    "cashflow": "Cashflow trail",
+    "confidence_review": "Review queue",
+    "category_mix": "Category mix",
+    "party_exposure": "People ledger",
+    "timeline": "Shop pulse timeline",
+}
+
+
+def chart_spec_from_question(rows: list[dict[str, Any]], question: str) -> dict[str, str]:
+    text = question.strip().lower()
+    if not rows:
+        return {"chart": "empty", "reason": "Add ledger rows before composing charts.", "model_used": "local rules"}
+    if any(word in text for word in ("owe", "due", "unpaid", "collect")):
+        chart = "due_by_party"
+        reason = "The question is about unpaid money and collections."
+    elif any(word in text for word in ("spend", "spent", "expense", "cash go", "cash out")):
+        chart = "expense_categories"
+        reason = "The question is about where cash went."
+    elif any(word in text for word in ("time", "trend", "flow", "day", "cash low")):
+        chart = "cashflow"
+        reason = "The question is about movement over time or cash position."
+    elif any(word in text for word in ("confidence", "wrong", "review", "mistake", "uncertain")):
+        chart = "confidence_review"
+        reason = "The question is about extraction quality."
+    elif any(word in text for word in ("person", "people", "supplier", "customer", "party")):
+        chart = "party_exposure"
+        reason = "The question is about people and suppliers."
+    elif any(word in text for word in ("story", "timeline", "happened")):
+        chart = "timeline"
+        reason = "The question asks for the story of the day."
+    else:
+        plan = build_chart_plan(rows)
+        chart = plan["chart"]
+        reason = plan["reason"]
+    return {"chart": chart, "reason": reason, "model_used": "local rules"}
+
+
+def figure_for_chart_id(rows: list[dict[str, Any]], chart: str) -> go.Figure:
+    builders = {
+        "due_by_party": due_by_party_figure,
+        "expense_categories": expense_category_figure,
+        "cashflow": cashflow_figure,
+        "confidence_review": confidence_review_figure,
+        "category_mix": category_mix_figure,
+        "party_exposure": party_exposure_figure,
+        "timeline": timeline_figure,
+    }
+    return builders.get(chart, category_mix_figure)(rows) if rows else empty_figure()
+
+
+def build_chart_composer_markdown(question: str, spec: dict[str, str]) -> str:
+    chart = spec.get("chart", "category_mix")
+    title = CHART_SPECS.get(chart, "Category mix")
+    reason = spec.get("reason") or "The ledger shape makes this view useful."
+    model_used = spec.get("model_used", "local rules")
+    prompt = question.strip() or "Auto-compose from the ledger."
+    return (
+        "### AI Chart Composer\n"
+        f"**Question:** {prompt}\n\n"
+        f"**Chart:** {title}\n\n"
+        f"**Why:** {reason}\n\n"
+        f"<small>Composer: {model_used}</small>"
+    )
+
+
 def build_chart_markdown(rows: list[dict[str, Any]]) -> str:
     plan = build_chart_plan(rows)
     if not rows:
