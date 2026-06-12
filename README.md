@@ -16,6 +16,8 @@ for a real person who keeps money notes in scraps, voice messages, or memory.
 - **No cloud inference APIs:** the language model runs through `llama.cpp` via
   `llama-cpp-python`.
 - **Gradio canvas:** the whole interface is a Gradio app.
+- **Custom cockpit UI:** the app uses a dark Shop OS layout with persistent
+  capture, pulse, and assistant zones instead of default Gradio tabs.
 - **Modal GPU deployment:** `modal_app.py` serves the Gradio UI and runs
   llama.cpp inference on a Modal `A10` GPU worker.
 
@@ -25,6 +27,8 @@ for a real person who keeps money notes in scraps, voice messages, or memory.
 - Record or upload a voice note; optional local Whisper transcription handles it.
 - Upload receipts, bills, note photos, or PDFs; PDFs are rendered to page
   images and Gemma reads the visual document content through llama.cpp.
+- Work inside a custom Shop OS Cockpit: a capture rail, live Shop Pulse center,
+  sticky ledger assistant, Action Inbox, People workbench, and Ledger Archive.
 - Extract structured ledger rows with amount, party, item, category, status, and
   confidence.
 - See a live dashboard for net cash, cash in, cash out, due amount, follow-ups,
@@ -65,6 +69,7 @@ modal_app.py           Modal deployment entrypoint
 shop_ledger/           App logic, UI, model backends
 tests/                 Unit tests for parsing and processing
 ARCHITECTURE.md        System architecture and data flow
+UI_DESIGN.md           Custom Gradio cockpit layout and UX rules
 ROADMAP.md             Future feature ideas and next sprint options
 FIELD_NOTES.md         Hackathon report starter
 DEPLOYMENT.md          Modal deployment notes
@@ -153,19 +158,20 @@ not as a hosted inference API.
 
 1. Add a messy text or voice note.
 2. Upload a receipt/photo/PDF and show it entering the same ledger flow.
-3. Open the dashboard and point to net cash, due amount, the chosen graph, and
-   the generated daily brief.
-4. Ask "Who owes me most?" and show the structured answer.
-5. Open the Pulse Timeline and show the day becoming a sequence of events.
-6. Open the automation queue and choose a polite, friendly, or firm follow-up
-   script.
-7. Open the Review Desk to show how uncertain rows are handled.
-8. Export the CSV.
+3. Point to the Shop Pulse center: net cash, due amount, dynamic chart, and
+   timeline update without leaving the cockpit.
+4. Ask "Who owes me most?" in the sticky ledger assistant rail.
+5. Generate the daily brief and run a command palette action.
+6. Show the Action Inbox with follow-ups, review items, and anomaly signals.
+7. Open People to show counterparty memory.
+8. Open Ledger Archive and export the CSV.
 
 ## More Docs
 
 - [Architecture](ARCHITECTURE.md): code map, data flow, model contract,
   fallback behavior, and testing strategy.
+- [UI Design](UI_DESIGN.md): Shop OS Cockpit layout, workbench model, CSS hooks,
+  and demo flow.
 - [Deployment](DEPLOYMENT.md): Modal GPU deployment, model volume, smoke tests,
   logs, and troubleshooting.
 - [Roadmap](ROADMAP.md): dynamic graphs, modern dashboard layout, daily briefs,

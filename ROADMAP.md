@@ -36,7 +36,7 @@ Future path:
 
 ### 2. Ledger Command Center Layout
 
-Status: partly shipped in the first enhancement sprint.
+Status: shipped in the Shop OS Cockpit sprint.
 
 Rearrange the UI into a more modern operational console:
 
@@ -45,9 +45,16 @@ Rearrange the UI into a more modern operational console:
 - Right rail: follow-up queue and risk alerts.
 - Bottom: raw ledger table.
 
-The dashboard now has a command-center graph wall and chart director. Next, the
-input area and automation queue can be reorganized into a true three-rail
-console.
+The app now has a three-zone cockpit:
+
+- Capture rail for text, audio, documents, currency, examples, and conflict
+  handling.
+- Shop Pulse center for KPIs, dynamic charts, timeline, and field intelligence.
+- Ledger Assistant rail for daily brief, Ask My Ledger, voice questions,
+  command palette, reminders, and closing ritual.
+
+Supporting workflows are grouped into an Action Inbox plus People and Ledger
+Archive workbenches instead of one tab per feature.
 
 ### 3. LLM-Generated Daily Brief
 
@@ -224,15 +231,17 @@ Already aligned:
 
 ### Off-Brand
 
-Partially aligned:
+Aligned:
 
 - custom dark UI
-- dashboard and automation queue
+- Shop OS Cockpit layout
+- persistent assistant rail
+- action inbox
+- themed Plotly graph wall
+- People and Ledger Archive workbenches
 
 Next step:
 
-- more custom layout
-- charts
 - richer CSS
 - possible custom Gradio frontend layer if the installed Gradio version exposes
   the needed APIs in the future

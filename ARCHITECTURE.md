@@ -165,32 +165,39 @@ testable and leaves room for a later local-LLM chart selector.
 
 ## UI Structure
 
-The UI is a dark, custom-styled Gradio Blocks app.
+The UI is a dark, custom-styled Gradio Blocks app organized as a small-shop
+operating cockpit.
 
-Top area:
+Top status strip:
 
-- written note
-- voice note
-- document upload
-- input selector
-- currency
-- add/clear actions
-- model and row status
+- model status
+- row count
 
-Tabs:
+Shop OS Cockpit:
 
-- `Dashboard`: KPIs, chart director, themed Plotly graph wall, field
-  intelligence, Gemma daily brief, full Ask My Ledger chat, voice questions,
-  command palette, category and party breakdowns.
-- `Automation Queue`: follow-up actions, reminder cadence, and reply studio
-  message variants.
-- `Review Desk`: low-confidence or incomplete rows with targeted correction
-  questions.
-- `Pulse Timeline`: story cards, event chart, and timeline table.
-- `People Memory`: counterparty profiles and next-message suggestions.
-- `Anomaly Lantern`: high-signal warnings before export.
-- `Closing Ritual`: end-of-day checklist and closing summary.
-- `Ledger`: raw ledger rows and CSV export.
+- `Capture` rail: written note, voice note, document upload, input selector,
+  currency, add/clear actions, conflict notice, and examples.
+- `Shop Pulse` center: live KPIs, chart composer, chart director, themed Plotly
+  graph wall, pulse timeline, and field intelligence.
+- `Ledger Assistant` rail: running totals, reminders, Gemma daily brief, full
+  Ask My Ledger chat, voice questions, prompt suggestions, command palette, and
+  daily closing ritual.
+
+Action Inbox:
+
+- follow-up automation cards
+- review desk cards
+- anomaly lantern cards
+- reply/review/anomaly tables inside a secondary accordion
+
+Workbenches:
+
+- `People`: counterparty memory, trust pulse, party totals, and next-message
+  suggestions.
+- `Ledger Archive`: raw ledger rows, CSV export, category heatmap, closing
+  checklist table, and timeline event table.
+
+See `UI_DESIGN.md` for the layout rationale, CSS hooks, and demo flow.
 
 ## Modal Production Path
 

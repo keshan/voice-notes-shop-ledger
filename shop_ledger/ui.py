@@ -78,7 +78,7 @@ CSS = """
 
 .gradio-container {
   background:
-    radial-gradient(circle at 18% 0%, rgba(139, 220, 139, 0.16), transparent 28%),
+    linear-gradient(120deg, rgba(139, 220, 139, 0.08), transparent 32%),
     linear-gradient(180deg, #090b0f 0%, #11171f 54%, #0c1015 100%);
   color: var(--ledger-ink) !important;
 }
@@ -134,12 +134,41 @@ CSS = """
   margin: 0;
 }
 
+#cockpit-shell {
+  display: grid !important;
+  grid-template-columns: minmax(270px, 0.9fr) minmax(430px, 1.65fr) minmax(310px, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.cockpit-pane {
+  min-width: 0;
+}
+
 #input-dock,
-#output-dock {
+#output-dock,
+#pulse-core,
+#assistant-rail,
+#action-inbox,
+#people-workbench,
+#ledger-archive {
   border: 1px solid var(--ledger-line);
   background: rgba(16, 21, 29, 0.86);
   border-radius: 8px;
   padding: 14px;
+}
+
+#input-dock,
+#assistant-rail {
+  position: sticky;
+  top: 12px;
+}
+
+#cockpit-shell h3,
+#action-inbox h3,
+#people-workbench h3,
+#ledger-archive h3 {
+  margin-top: 0;
 }
 
 #input-notice {
@@ -232,7 +261,7 @@ button.primary {
 #chart-director,
 #daily-brief-panel,
 #ask-ledger-panel {
-  min-height: 180px;
+  min-height: 128px;
   border-left: 4px solid var(--ledger-blue);
 }
 
@@ -242,6 +271,18 @@ button.primary {
     linear-gradient(180deg, rgba(16, 21, 29, 0.92), rgba(8, 12, 18, 0.88));
   border-radius: 8px;
   padding: 12px;
+}
+
+#pulse-core #dashboard-panel {
+  margin-bottom: 10px;
+}
+
+#pulse-core #chart-director {
+  margin-bottom: 10px;
+}
+
+#pulse-core #timeline-panel {
+  margin-top: 10px;
 }
 
 #chart-wall .block,
@@ -264,7 +305,7 @@ button.primary {
 }
 
 #ask-chatbot {
-  min-height: 300px;
+  min-height: 340px;
   border: 1px solid rgba(157, 177, 154, 0.18);
   border-radius: 8px;
   background: rgba(6, 10, 15, 0.72);
@@ -293,7 +334,7 @@ button.primary {
 }
 
 #command-output {
-  min-height: 120px;
+  min-height: 96px;
   border: 1px solid rgba(157, 177, 154, 0.18);
   border-radius: 8px;
   background: rgba(6, 10, 15, 0.64);
@@ -303,6 +344,41 @@ button.primary {
 #chart-compose-row {
   align-items: end;
   margin-bottom: 10px;
+}
+
+#action-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+#archive-grid,
+.people-grid {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+#rail-stack {
+  display: grid;
+  gap: 10px;
+}
+
+#workbench-tabs {
+  margin-top: 12px;
+}
+
+#workbench-tabs .tab-nav {
+  background: rgba(8, 12, 18, 0.72) !important;
+  border: 1px solid rgba(157, 177, 154, 0.18) !important;
+  border-radius: 8px !important;
+  padding: 4px !important;
+}
+
+#workbench-tabs button {
+  border-radius: 6px !important;
 }
 
 .followup-card {
@@ -492,6 +568,18 @@ button.primary {
 }
 
 @media (max-width: 760px) {
+  #cockpit-shell,
+  #action-grid,
+  #archive-grid,
+  .people-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  #input-dock,
+  #assistant-rail {
+    position: static;
+  }
+
   .metric-grid {
     grid-template-columns: 1fr;
   }
@@ -562,8 +650,9 @@ def build_demo(
             model_badge = gr.Markdown("Model: not run yet")
             row_count = gr.Markdown("Rows: 0")
 
-        with gr.Row():
-            with gr.Column(scale=5, elem_id="input-dock"):
+        with gr.Row(elem_id="cockpit-shell"):
+            with gr.Column(scale=3, elem_id="input-dock", elem_classes=["cockpit-pane"]):
+                gr.Markdown("### Capture")
                 note_box = gr.Textbox(
                     label="Written note",
                     placeholder="paid Ravi 1200 for rice bags, customer Nimal owes 750 for tea packets",
@@ -591,37 +680,42 @@ def build_demo(
                     )
                     add_button = gr.Button("Add to ledger", variant="primary")
                     clear_button = gr.Button("Clear")
-            with gr.Column(scale=4, elem_id="output-dock"):
+                gr.Examples(
+                    examples=EXAMPLES,
+                    inputs=note_box,
+                    label="Try a messy shop note",
+                )
+
+            with gr.Column(scale=6, elem_id="pulse-core", elem_classes=["cockpit-pane"]):
+                gr.Markdown("### Shop Pulse")
+                dashboard = gr.Markdown(build_dashboard_markdown([]), elem_id="dashboard-panel")
+                with gr.Column(elem_id="chart-wall"):
+                    with gr.Row(elem_id="chart-compose-row"):
+                        chart_question = gr.Textbox(
+                            label="Compose chart",
+                            placeholder="Show me why cash feels low today",
+                            lines=1,
+                            scale=5,
+                        )
+                        chart_compose_button = gr.Button("Compose", variant="secondary", scale=1)
+                    chart_director = gr.Markdown(build_chart_markdown([]), elem_id="chart-director")
+                    primary_chart, secondary_chart, tertiary_chart = build_insight_figures([])
+                    primary_plot = gr.Plot(value=primary_chart, label="Insight graph")
+                    with gr.Row(elem_id="signal-row"):
+                        secondary_plot = gr.Plot(value=secondary_chart, label="Cash trail")
+                        tertiary_plot = gr.Plot(value=tertiary_chart, label="People ledger")
+                timeline = gr.Markdown(build_timeline_markdown([]), elem_id="timeline-panel")
+                timeline_plot = gr.Plot(value=timeline_figure([]), label="Shop pulse")
+                insights = gr.Markdown(build_insights_markdown([]), elem_id="insight-panel")
+
+            with gr.Column(scale=4, elem_id="assistant-rail", elem_classes=["cockpit-pane"]):
+                gr.Markdown("### Ledger Assistant")
                 summary = gr.Markdown("No ledger rows yet.", elem_classes=["summary-card"])
                 reminders = gr.Markdown("No reminders yet.", elem_classes=["reminder-card"])
-
-        with gr.Tabs():
-            with gr.Tab("Dashboard"):
-                with gr.Row(elem_id="dashboard-panel"):
-                    dashboard = gr.Markdown(build_dashboard_markdown([]))
-                with gr.Row(elem_classes=["dashboard-grid"]):
-                    with gr.Column(elem_classes=["ops-stack"]):
-                        with gr.Column(elem_id="chart-director", elem_classes=["ops-card"]):
-                            chart_director = gr.Markdown(build_chart_markdown([]))
-                        daily_brief = gr.Markdown(build_daily_brief_markdown([]), elem_id="daily-brief-panel")
-                        daily_brief_button = gr.Button("Generate daily brief", variant="secondary")
-                        insights = gr.Markdown(build_insights_markdown([]), elem_id="insight-panel")
-                    with gr.Column(elem_id="chart-wall"):
-                        with gr.Row(elem_id="chart-compose-row"):
-                            chart_question = gr.Textbox(
-                                label="Compose chart",
-                                placeholder="Show me why cash feels low today",
-                                lines=1,
-                                scale=5,
-                            )
-                            chart_compose_button = gr.Button("Compose", variant="secondary", scale=1)
-                        primary_chart, secondary_chart, tertiary_chart = build_insight_figures([])
-                        primary_plot = gr.Plot(value=primary_chart, label="Insight graph")
-                        with gr.Row(elem_id="signal-row"):
-                            secondary_plot = gr.Plot(value=secondary_chart, label="Cash trail")
-                            tertiary_plot = gr.Plot(value=tertiary_chart, label="People ledger")
-                with gr.Row(elem_id="ask-chat-panel", elem_classes=["chat-panel"]):
-                    with gr.Column(scale=5):
+                with gr.Column(elem_id="rail-stack"):
+                    daily_brief = gr.Markdown(build_daily_brief_markdown([]), elem_id="daily-brief-panel")
+                    daily_brief_button = gr.Button("Generate daily brief", variant="secondary")
+                    with gr.Column(elem_id="ask-chat-panel", elem_classes=["chat-panel"]):
                         ask_chatbot = gr.Chatbot(
                             value=initial_ask_chat(),
                             label="Ask My Ledger",
@@ -637,15 +731,15 @@ def build_demo(
                                 scale=5,
                             )
                             ask_button = gr.Button("Ask", variant="primary", scale=1)
-                            ask_clear = gr.Button("Reset chat", scale=1)
                         with gr.Row():
                             ask_voice = gr.Audio(
                                 label="Ask by voice",
                                 sources=["microphone", "upload"],
                                 type="filepath",
+                                scale=3,
                             )
-                            ask_voice_button = gr.Button("Ask voice", variant="secondary")
-                    with gr.Column(scale=2):
+                            ask_voice_button = gr.Button("Ask voice", variant="secondary", scale=1)
+                            ask_clear = gr.Button("Reset", scale=1)
                         gr.Markdown(
                             """
                             ### Good questions
@@ -656,8 +750,7 @@ def build_demo(
                             """,
                             elem_id="ask-ledger-panel",
                         )
-                with gr.Row(elem_id="command-panel", elem_classes=["chat-panel"]):
-                    with gr.Column(scale=2):
+                    with gr.Column(elem_id="command-panel", elem_classes=["chat-panel"]):
                         command_choice = gr.Dropdown(
                             label="Ledger command",
                             choices=COMMAND_ACTIONS,
@@ -665,130 +758,134 @@ def build_demo(
                             interactive=True,
                         )
                         command_button = gr.Button("Run command", variant="secondary")
-                    with gr.Column(scale=5):
                         command_output = gr.Markdown(
                             "### Command Palette\nChoose a command to run against the current ledger.",
                             elem_id="command-output",
                         )
-                with gr.Row():
-                    category_table = gr.Dataframe(
-                        headers=["category", "total", "display"],
-                        datatype=["str", "number", "str"],
-                        label="Category heatmap",
-                        interactive=False,
-                        wrap=True,
-                    )
-                    party_table = gr.Dataframe(
-                        headers=["party", "total", "due"],
-                        datatype=["str", "str", "str"],
-                        label="People and suppliers",
-                        interactive=False,
-                        wrap=True,
-                    )
-            with gr.Tab("Automation Queue"):
-                automation = gr.Markdown(build_reminder_markdown([]), elem_id="automation-panel")
-                automation_table = gr.Dataframe(
-                    headers=[
-                        "priority",
-                        "counterparty",
-                        "amount",
-                        "item",
-                        "next_action",
-                        "cadence",
-                        "polite_script",
-                        "friendly_script",
-                        "firm_script",
-                        "source_row",
-                    ],
-                    datatype=["str", "str", "str", "str", "str", "str", "str", "str", "str", "number"],
-                    label="Reply studio",
-                    interactive=False,
-                    wrap=True,
-                )
-            with gr.Tab("Review Desk"):
-                review = gr.Markdown(build_review_markdown([]), elem_id="review-panel")
-                review_table = gr.Dataframe(
-                    headers=["source_row", "issue", "confidence", "counterparty", "item", "amount", "question"],
-                    datatype=["number", "str", "str", "str", "str", "str", "str"],
-                    label="Rows to verify",
-                    interactive=False,
-                    wrap=True,
-                )
-            with gr.Tab("Pulse Timeline"):
-                timeline = gr.Markdown(build_timeline_markdown([]), elem_id="timeline-panel")
-                timeline_plot = gr.Plot(value=timeline_figure([]), label="Shop pulse")
-                timeline_table = gr.Dataframe(
-                    headers=[
-                        "source_row",
-                        "date",
-                        "badge",
-                        "direction",
-                        "counterparty",
-                        "item",
-                        "amount",
-                        "signed_amount",
-                        "status",
-                        "story",
-                    ],
-                    datatype=["number", "str", "str", "str", "str", "str", "str", "number", "str", "str"],
-                    label="Timeline events",
-                    interactive=False,
-                    wrap=True,
-                )
-            with gr.Tab("People Memory"):
-                memory = gr.Markdown(build_counterparty_memory_markdown([]), elem_id="memory-panel")
-                memory_table = gr.Dataframe(
-                    headers=[
-                        "party",
-                        "trust_pulse",
-                        "total_moved",
-                        "paid",
-                        "due",
-                        "usual_category",
-                        "usual_item",
-                        "last_item",
-                        "row_count",
-                        "next_message",
-                    ],
-                    datatype=["str", "str", "str", "str", "str", "str", "str", "str", "number", "str"],
-                    label="Counterparty memory",
-                    interactive=False,
-                    wrap=True,
-                )
-            with gr.Tab("Anomaly Lantern"):
-                lantern = gr.Markdown(build_anomaly_lantern_markdown([]), elem_id="lantern-panel")
-                lantern_table = gr.Dataframe(
-                    headers=["source_row", "severity", "signal", "counterparty", "item", "amount", "reason"],
-                    datatype=["str", "str", "str", "str", "str", "str", "str"],
-                    label="Anomaly signals",
-                    interactive=False,
-                    wrap=True,
-                )
-            with gr.Tab("Closing Ritual"):
-                closing = gr.Markdown(build_closing_ritual_markdown([]), elem_id="closing-panel")
-                closing_table = gr.Dataframe(
-                    headers=["step", "status", "detail"],
-                    datatype=["str", "str", "str"],
-                    label="Closing checklist",
-                    interactive=False,
-                    wrap=True,
-                )
-            with gr.Tab("Ledger"):
-                ledger = gr.Dataframe(
-                    headers=COLUMNS,
-                    datatype=["str"] * len(COLUMNS),
-                    label="Ledger",
-                    interactive=False,
-                    wrap=True,
-                    elem_id="ledger-table",
-                )
-                download = gr.File(label="Download CSV", elem_id="download-box")
+                    closing = gr.Markdown(build_closing_ritual_markdown([]), elem_id="closing-panel")
 
-        gr.Examples(
-            examples=EXAMPLES,
-            inputs=note_box,
-            label="Try a messy shop note",
-        )
+        with gr.Row(elem_id="action-inbox"):
+            with gr.Column():
+                gr.Markdown("### Action Inbox")
+                with gr.Row(elem_id="action-grid"):
+                    automation = gr.Markdown(build_reminder_markdown([]), elem_id="automation-panel")
+                    review = gr.Markdown(build_review_markdown([]), elem_id="review-panel")
+                    lantern = gr.Markdown(build_anomaly_lantern_markdown([]), elem_id="lantern-panel")
+                with gr.Accordion("Operational tables", open=False):
+                    gr.Markdown("Follow-ups, verification rows, and anomaly signals live here for review before export.")
+                    with gr.Row():
+                        automation_table = gr.Dataframe(
+                            headers=[
+                                "priority",
+                                "counterparty",
+                                "amount",
+                                "item",
+                                "next_action",
+                                "cadence",
+                                "polite_script",
+                                "friendly_script",
+                                "firm_script",
+                                "source_row",
+                            ],
+                            datatype=["str", "str", "str", "str", "str", "str", "str", "str", "str", "number"],
+                            label="Reply studio",
+                            interactive=False,
+                            wrap=True,
+                        )
+                    with gr.Row():
+                        review_table = gr.Dataframe(
+                            headers=["source_row", "issue", "confidence", "counterparty", "item", "amount", "question"],
+                            datatype=["number", "str", "str", "str", "str", "str", "str"],
+                            label="Rows to verify",
+                            interactive=False,
+                            wrap=True,
+                        )
+                        lantern_table = gr.Dataframe(
+                            headers=["source_row", "severity", "signal", "counterparty", "item", "amount", "reason"],
+                            datatype=["str", "str", "str", "str", "str", "str", "str"],
+                            label="Anomaly signals",
+                            interactive=False,
+                            wrap=True,
+                        )
+
+        with gr.Tabs(elem_id="workbench-tabs"):
+            with gr.Tab("People"):
+                with gr.Row(elem_id="people-workbench"):
+                    with gr.Column():
+                        gr.Markdown("### People Memory")
+                        memory = gr.Markdown(build_counterparty_memory_markdown([]), elem_id="memory-panel")
+                    with gr.Column():
+                        memory_table = gr.Dataframe(
+                            headers=[
+                                "party",
+                                "trust_pulse",
+                                "total_moved",
+                                "paid",
+                                "due",
+                                "usual_category",
+                                "usual_item",
+                                "last_item",
+                                "row_count",
+                                "next_message",
+                            ],
+                            datatype=["str", "str", "str", "str", "str", "str", "str", "str", "number", "str"],
+                            label="Counterparty memory",
+                            interactive=False,
+                            wrap=True,
+                        )
+                        party_table = gr.Dataframe(
+                            headers=["party", "total", "due"],
+                            datatype=["str", "str", "str"],
+                            label="People and suppliers",
+                            interactive=False,
+                            wrap=True,
+                        )
+            with gr.Tab("Ledger Archive"):
+                with gr.Row(elem_id="ledger-archive"):
+                    with gr.Column(scale=3):
+                        ledger = gr.Dataframe(
+                            headers=COLUMNS,
+                            datatype=["str"] * len(COLUMNS),
+                            label="Ledger",
+                            interactive=False,
+                            wrap=True,
+                            elem_id="ledger-table",
+                        )
+                        download = gr.File(label="Download CSV", elem_id="download-box")
+                    with gr.Column(scale=2):
+                        category_table = gr.Dataframe(
+                            headers=["category", "total", "display"],
+                            datatype=["str", "number", "str"],
+                            label="Category heatmap",
+                            interactive=False,
+                            wrap=True,
+                        )
+                        closing_table = gr.Dataframe(
+                            headers=["step", "status", "detail"],
+                            datatype=["str", "str", "str"],
+                            label="Closing checklist",
+                            interactive=False,
+                            wrap=True,
+                        )
+                with gr.Accordion("Timeline event table", open=False):
+                    timeline_table = gr.Dataframe(
+                        headers=[
+                            "source_row",
+                            "date",
+                            "badge",
+                            "direction",
+                            "counterparty",
+                            "item",
+                            "amount",
+                            "signed_amount",
+                            "status",
+                            "story",
+                        ],
+                        datatype=["number", "str", "str", "str", "str", "str", "str", "number", "str", "str"],
+                        label="Timeline events",
+                        interactive=False,
+                        wrap=True,
+                    )
 
         add_button.click(
             fn=lambda note, audio, document, source_choice, currency_value, state: add_to_ledger(
