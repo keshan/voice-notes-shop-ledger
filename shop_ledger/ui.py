@@ -635,6 +635,13 @@ def build_demo(
                             )
                             ask_button = gr.Button("Ask", variant="primary", scale=1)
                             ask_clear = gr.Button("Reset chat", scale=1)
+                        with gr.Row():
+                            ask_voice = gr.Audio(
+                                label="Ask by voice",
+                                sources=["microphone", "upload"],
+                                type="filepath",
+                            )
+                            ask_voice_button = gr.Button("Ask voice", variant="secondary")
                     with gr.Column(scale=2):
                         gr.Markdown(
                             """
@@ -892,6 +899,17 @@ def build_demo(
         ask_clear.click(
             fn=lambda: (initial_ask_chat(), ""),
             outputs=[ask_chatbot, ask_question],
+        )
+        ask_voice_button.click(
+            fn=lambda state, audio, history, currency_value: ask_ledger_voice_chat(
+                state,
+                audio,
+                history,
+                currency_value,
+                active_ask_ledger,
+            ),
+            inputs=[ledger_state, ask_voice, ask_chatbot, currency],
+            outputs=[ask_chatbot, ask_question, ask_voice],
         )
         command_button.click(
             fn=run_command_palette,
@@ -1281,6 +1299,28 @@ def ask_ledger_chat(
     next_history.append({"role": "user", "content": clean_question})
     next_history.append({"role": "assistant", "content": f"{answer}\n\nAnswer source: {model_used}"})
     return next_history, ""
+
+
+def ask_ledger_voice_chat(
+    state: list[dict[str, Any]] | None,
+    audio_path: str | None,
+    history: ChatHistory | None,
+    currency: str,
+    ask_ledger_fn: AskLedgerFn,
+    transcribe_fn: Callable[[str | None], str] = transcribe_audio,
+) -> tuple[ChatHistory, str, Any]:
+    transcript = transcribe_fn(audio_path).strip()
+    next_history: ChatHistory = list(history or initial_ask_chat())
+    if not transcript:
+        next_history.append(
+            {
+                "role": "assistant",
+                "content": "I could not hear a question clearly. Try recording again or type the question.",
+            }
+        )
+        return next_history, "", None
+    history_with_answer, _ = ask_ledger_chat(state, transcript, next_history, currency, ask_ledger_fn)
+    return history_with_answer, "", None
 
 
 def run_command_palette(state: list[dict[str, Any]] | None, command: str) -> str:

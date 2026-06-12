@@ -6,6 +6,7 @@ from shop_ledger.ui import (
     add_to_ledger,
     ask_ledger,
     ask_ledger_chat,
+    ask_ledger_voice_chat,
     choose_input,
     compose_chart,
     generate_daily_brief,
@@ -169,6 +170,34 @@ class InputChoiceTests(unittest.TestCase):
         self.assertEqual(history[-2]["role"], "user")
         self.assertEqual(history[-1]["role"], "assistant")
         self.assertIn("Nimal", history[-1]["content"])
+
+    def test_ask_ledger_voice_chat_transcribes_and_answers(self):
+        history, next_question, next_audio = ask_ledger_voice_chat(
+            [{"counterparty": "Nimal", "amount": 7500, "payment_status": "due", "currency": "LKR"}],
+            "/tmp/question.wav",
+            initial_ask_chat(),
+            "LKR",
+            lambda rows, question, currency: {"answer": f"Answered: {question}", "model_used": "fake"},
+            transcribe_fn=lambda path: "Who owes me most?",
+        )
+
+        self.assertEqual(next_question, "")
+        self.assertIsNone(next_audio)
+        self.assertIn("Who owes me most?", history[-2]["content"])
+        self.assertIn("Answered", history[-1]["content"])
+
+    def test_ask_ledger_voice_chat_handles_empty_transcript(self):
+        history, _, next_audio = ask_ledger_voice_chat(
+            [],
+            "/tmp/question.wav",
+            initial_ask_chat(),
+            "LKR",
+            lambda rows, question, currency: {"answer": "unused", "model_used": "fake"},
+            transcribe_fn=lambda path: "",
+        )
+
+        self.assertIsNone(next_audio)
+        self.assertIn("could not hear", history[-1]["content"])
 
     def test_run_command_palette_uses_current_rows(self):
         rows = [{"payment_status": "due", "counterparty": "Nimal", "amount": 7500, "currency": "LKR", "item": "tea"}]
