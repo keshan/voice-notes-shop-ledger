@@ -6,11 +6,13 @@ from shop_ledger.insights import (
     build_anomaly_lantern_markdown,
     build_chart_plan,
     build_chart_composer_markdown,
+    build_closing_ritual_markdown,
     build_counterparty_memory_markdown,
     build_daily_brief_markdown,
     build_insight_figures,
     build_timeline_markdown,
     compute_metrics,
+    closing_checklist,
     counterparty_memory_cards,
     chart_spec_from_question,
     daily_brief_fallback,
@@ -189,6 +191,18 @@ class InsightTests(unittest.TestCase):
 
         self.assertIn("Anomaly Lantern", markdown)
         self.assertIn("High-value due", markdown)
+
+    def test_closing_checklist_includes_export_step(self):
+        checklist = closing_checklist(ROWS)
+
+        self.assertTrue(any(item["step"] == "Export ledger" for item in checklist))
+        self.assertTrue(any(item["status"] == "Action" for item in checklist))
+
+    def test_closing_ritual_markdown_summarizes_day(self):
+        markdown = build_closing_ritual_markdown(ROWS)
+
+        self.assertIn("Daily Closing Ritual", markdown)
+        self.assertIn("Closing Checklist", markdown)
 
 
 if __name__ == "__main__":

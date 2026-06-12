@@ -26,6 +26,8 @@ from shop_ledger.insights import (
     COMMAND_ACTIONS,
     anomaly_lantern_rows,
     build_anomaly_lantern_markdown,
+    build_closing_ritual_markdown,
+    closing_checklist,
     run_ledger_command,
     timeline_figure,
     timeline_rows,
@@ -481,6 +483,7 @@ button.primary {
 #timeline-panel,
 #memory-panel,
 #lantern-panel,
+#closing-panel,
 #insight-panel {
   border: 1px solid var(--ledger-line);
   background: rgba(16, 21, 29, 0.86);
@@ -761,6 +764,15 @@ def build_demo(
                     interactive=False,
                     wrap=True,
                 )
+            with gr.Tab("Closing Ritual"):
+                closing = gr.Markdown(build_closing_ritual_markdown([]), elem_id="closing-panel")
+                closing_table = gr.Dataframe(
+                    headers=["step", "status", "detail"],
+                    datatype=["str", "str", "str"],
+                    label="Closing checklist",
+                    interactive=False,
+                    wrap=True,
+                )
             with gr.Tab("Ledger"):
                 ledger = gr.Dataframe(
                     headers=COLUMNS,
@@ -822,6 +834,8 @@ def build_demo(
                 memory_table,
                 lantern,
                 lantern_table,
+                closing,
+                closing_table,
             ],
         )
         clear_button.click(
@@ -864,6 +878,8 @@ def build_demo(
                 memory_table,
                 lantern,
                 lantern_table,
+                closing,
+                closing_table,
                 command_output,
                 ask_chatbot,
                 ask_question,
@@ -1226,6 +1242,8 @@ def render_intelligence(rows: list[dict[str, Any]]) -> tuple[Any, ...]:
             anomaly_lantern_rows(rows),
             columns=["source_row", "severity", "signal", "counterparty", "item", "amount", "reason"],
         ),
+        build_closing_ritual_markdown(rows),
+        pd.DataFrame(closing_checklist(rows), columns=["step", "status", "detail"]),
     )
 
 

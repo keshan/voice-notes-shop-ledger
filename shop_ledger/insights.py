@@ -684,6 +684,65 @@ def build_anomaly_lantern_markdown(rows: list[dict[str, Any]]) -> str:
     return "\n".join(blocks)
 
 
+def closing_checklist(rows: list[dict[str, Any]]) -> list[dict[str, str]]:
+    metrics = compute_metrics(rows)
+    followups = followup_rows(rows)
+    reviews = review_rows(rows)
+    anomalies = anomaly_lantern_rows(rows)
+    return [
+        {
+            "step": "Count cash",
+            "status": "Ready" if rows else "Waiting",
+            "detail": f"Net cash is {money(metrics['net_cash'], metrics['currency'])}.",
+        },
+        {
+            "step": "Collect dues",
+            "status": "Action" if followups else "Clear",
+            "detail": f"{len(followups)} follow-up(s) waiting.",
+        },
+        {
+            "step": "Review uncertain rows",
+            "status": "Action" if reviews else "Clear",
+            "detail": f"{len(reviews)} row(s) need a human check.",
+        },
+        {
+            "step": "Check anomalies",
+            "status": "Action" if anomalies else "Clear",
+            "detail": f"{len(anomalies)} signal(s) found.",
+        },
+        {
+            "step": "Export ledger",
+            "status": "Ready" if rows and not reviews else "Review first",
+            "detail": "Download CSV after review for accountant or QuickBooks handoff.",
+        },
+    ]
+
+
+def build_closing_ritual_markdown(rows: list[dict[str, Any]]) -> str:
+    if not rows:
+        return "### Daily Closing Ritual\nAdd today’s notes, then close the shop with a guided checklist."
+
+    metrics = compute_metrics(rows)
+    currency = metrics["currency"]
+    top_category, top_total = top_counter(rows, "category")
+    followups = followup_rows(rows)
+    next_followup = (
+        f"First follow-up: {followups[0]['counterparty']} for {followups[0]['amount']}."
+        if followups
+        else "No follow-ups waiting."
+    )
+    checklist = closing_checklist(rows)
+    items = "\n".join(f"- **{item['step']}** · {item['status']}: {item['detail']}" for item in checklist)
+    return (
+        "### Daily Closing Ritual\n"
+        f"Today closes with **{money(metrics['net_cash'], currency)}** net cash, "
+        f"**{money(metrics['due_income'], currency)}** still due, and **{len(rows)}** ledger row(s). "
+        f"Most movement was in **{top_category}** ({money(top_total, currency)}). {next_followup}\n\n"
+        "### Closing Checklist\n"
+        f"{items}"
+    )
+
+
 def risk_flags(rows: list[dict[str, Any]]) -> list[str]:
     metrics = compute_metrics(rows)
     currency = metrics["currency"]
