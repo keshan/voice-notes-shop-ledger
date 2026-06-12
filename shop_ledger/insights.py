@@ -593,6 +593,97 @@ def run_ledger_command(rows: list[dict[str, Any]], command: str) -> str:
     )
 
 
+def anomaly_lantern_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    if not rows:
+        return []
+
+    currency = primary_currency(rows)
+    values = [amount(row) for row in rows if amount(row) > 0]
+    avg_value = sum(values) / len(values) if values else 0
+    due_counts: dict[str, int] = defaultdict(int)
+    anomalies = []
+    for index, row in enumerate(rows, start=1):
+        party = row.get("counterparty") or "Unknown"
+        value = amount(row)
+        if row.get("payment_status") == "due":
+            due_counts[str(party)] += 1
+        if value == 0:
+            anomalies.append(make_anomaly(index, "Missing amount", "Check", party, row, "No amount was captured."))
+        if float(row.get("confidence") or 0) < 0.6:
+            anomalies.append(make_anomaly(index, "Low confidence", "Review", party, row, "Extraction confidence is below 60%."))
+        if avg_value and value > avg_value * 2.5 and value >= 5000:
+            anomalies.append(
+                make_anomaly(
+                    index,
+                    "Unusually large amount",
+                    "Watch",
+                    party,
+                    row,
+                    f"{money(value, currency)} is much larger than the current average entry.",
+                )
+            )
+        if row.get("payment_status") == "due" and value >= 5000:
+            anomalies.append(
+                make_anomaly(index, "High-value due", "Collect", party, row, f"{party} owes {money(value, currency)}.")
+            )
+
+    for party, count in due_counts.items():
+        if count > 1:
+            anomalies.append(
+                {
+                    "source_row": "",
+                    "severity": "Watch",
+                    "signal": "Repeat unpaid party",
+                    "counterparty": party,
+                    "item": "multiple due rows",
+                    "amount": "",
+                    "reason": f"{party} appears in {count} unpaid rows.",
+                }
+            )
+    severity_order = {"Collect": 0, "Watch": 1, "Review": 2, "Check": 3}
+    return sorted(anomalies, key=lambda item: (severity_order.get(item["severity"], 9), str(item["counterparty"])))[:12]
+
+
+def make_anomaly(
+    index: int,
+    signal: str,
+    severity: str,
+    party: Any,
+    row: dict[str, Any],
+    reason: str,
+) -> dict[str, Any]:
+    return {
+        "source_row": index,
+        "severity": severity,
+        "signal": signal,
+        "counterparty": party or "Unknown",
+        "item": row.get("item") or "ledger item",
+        "amount": money(amount(row), row.get("currency") or primary_currency([row])),
+        "reason": reason,
+    }
+
+
+def build_anomaly_lantern_markdown(rows: list[dict[str, Any]]) -> str:
+    anomalies = anomaly_lantern_rows(rows)
+    if not rows:
+        return "### Anomaly Lantern\nSignals appear after ledger rows are added."
+    if not anomalies:
+        return "### Anomaly Lantern\nNo bright warnings found. Still review before export."
+
+    blocks = ["### Anomaly Lantern", "<div class='lantern-grid'>"]
+    for item in anomalies[:8]:
+        tone = item["severity"].lower()
+        blocks.append(
+            f"<div class='lantern-card {tone}'>"
+            f"<strong>{item['severity']} · {item['signal']}</strong>"
+            f"<p>{item['counterparty']} · {item['item']} · {item['amount']}</p>"
+            f"<code>{item['reason']}</code>"
+            "</div>"
+        )
+    blocks.append("</div>")
+    return "\n".join(blocks)
+
+
 def risk_flags(rows: list[dict[str, Any]]) -> list[str]:
     metrics = compute_metrics(rows)
     currency = metrics["currency"]

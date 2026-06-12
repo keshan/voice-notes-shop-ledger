@@ -2,6 +2,8 @@ import unittest
 
 from shop_ledger.insights import (
     answer_ledger_question,
+    anomaly_lantern_rows,
+    build_anomaly_lantern_markdown,
     build_chart_plan,
     build_chart_composer_markdown,
     build_counterparty_memory_markdown,
@@ -173,6 +175,20 @@ class InsightTests(unittest.TestCase):
 
         self.assertIn("AI Chart Composer", markdown)
         self.assertIn("Due radar", markdown)
+
+    def test_anomaly_lantern_flags_high_due_and_missing_amount(self):
+        rows = ROWS + [{"counterparty": "Saman", "item": "unknown", "amount": 0, "currency": "LKR", "confidence": 0.4}]
+
+        anomalies = anomaly_lantern_rows(rows)
+
+        self.assertTrue(any(item["signal"] == "High-value due" for item in anomalies))
+        self.assertTrue(any(item["signal"] == "Missing amount" for item in anomalies))
+
+    def test_anomaly_lantern_markdown_renders_cards(self):
+        markdown = build_anomaly_lantern_markdown(ROWS)
+
+        self.assertIn("Anomaly Lantern", markdown)
+        self.assertIn("High-value due", markdown)
 
 
 if __name__ == "__main__":

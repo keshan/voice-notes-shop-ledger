@@ -24,6 +24,8 @@ from shop_ledger.insights import (
     chart_spec_from_question,
     figure_for_chart_id,
     COMMAND_ACTIONS,
+    anomaly_lantern_rows,
+    build_anomaly_lantern_markdown,
     run_ledger_command,
     timeline_figure,
     timeline_rows,
@@ -409,6 +411,40 @@ button.primary {
   padding: 8px;
 }
 
+.lantern-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.lantern-card {
+  background: rgba(8, 12, 18, 0.88);
+  border: 1px solid var(--ledger-line);
+  border-left: 4px solid var(--ledger-blue);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.lantern-card.collect,
+.lantern-card.watch {
+  border-left-color: var(--ledger-red);
+}
+
+.lantern-card.review {
+  border-left-color: var(--ledger-gold);
+}
+
+.lantern-card code {
+  display: block;
+  white-space: normal;
+  color: var(--ledger-ink);
+  background: rgba(255, 122, 104, 0.08);
+  border: 1px solid rgba(255, 122, 104, 0.2);
+  border-radius: 6px;
+  margin-top: 8px;
+  padding: 8px;
+}
+
 .followup-card code {
   display: block;
   white-space: normal;
@@ -444,6 +480,7 @@ button.primary {
 #command-panel,
 #timeline-panel,
 #memory-panel,
+#lantern-panel,
 #insight-panel {
   border: 1px solid var(--ledger-line);
   background: rgba(16, 21, 29, 0.86);
@@ -465,6 +502,10 @@ button.primary {
   }
 
   .memory-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .lantern-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -704,6 +745,15 @@ def build_demo(
                     interactive=False,
                     wrap=True,
                 )
+            with gr.Tab("Anomaly Lantern"):
+                lantern = gr.Markdown(build_anomaly_lantern_markdown([]), elem_id="lantern-panel")
+                lantern_table = gr.Dataframe(
+                    headers=["source_row", "severity", "signal", "counterparty", "item", "amount", "reason"],
+                    datatype=["str", "str", "str", "str", "str", "str", "str"],
+                    label="Anomaly signals",
+                    interactive=False,
+                    wrap=True,
+                )
             with gr.Tab("Ledger"):
                 ledger = gr.Dataframe(
                     headers=COLUMNS,
@@ -763,6 +813,8 @@ def build_demo(
                 timeline_table,
                 memory,
                 memory_table,
+                lantern,
+                lantern_table,
             ],
         )
         clear_button.click(
@@ -803,6 +855,8 @@ def build_demo(
                 timeline_table,
                 memory,
                 memory_table,
+                lantern,
+                lantern_table,
                 command_output,
                 ask_chatbot,
                 ask_question,
@@ -1148,6 +1202,11 @@ def render_intelligence(rows: list[dict[str, Any]]) -> tuple[Any, ...]:
                 "row_count",
                 "next_message",
             ],
+        ),
+        build_anomaly_lantern_markdown(rows),
+        pd.DataFrame(
+            anomaly_lantern_rows(rows),
+            columns=["source_row", "severity", "signal", "counterparty", "item", "amount", "reason"],
         ),
     )
 
