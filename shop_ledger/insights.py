@@ -465,6 +465,66 @@ def answer_ledger_question(rows: list[dict[str, Any]], question: str) -> str:
     )
 
 
+COMMAND_ACTIONS = [
+    "Show unpaid",
+    "Draft WhatsApp follow-ups",
+    "Find risky rows",
+    "Summarize cash",
+    "Prepare QuickBooks export",
+]
+
+
+def run_ledger_command(rows: list[dict[str, Any]], command: str) -> str:
+    if not rows:
+        return "### Command Palette\nAdd ledger rows first, then run a command."
+
+    action = (command or "").strip() or COMMAND_ACTIONS[0]
+    currency = primary_currency(rows)
+    if action == "Show unpaid":
+        due_rows = [row for row in rows if row.get("payment_status") == "due"]
+        if not due_rows:
+            return "### Unpaid\nNo unpaid rows are open."
+        lines = [
+            f"- **{row.get('counterparty') or 'Unknown'}** owes {money(amount(row), currency)} for {row.get('item') or 'ledger item'}."
+            for row in due_rows[:8]
+        ]
+        return "### Unpaid\n" + "\n".join(lines)
+
+    if action == "Draft WhatsApp follow-ups":
+        queue = followup_rows(rows)
+        if not queue:
+            return "### WhatsApp Follow-ups\nNo follow-up messages are waiting."
+        lines = [f"- **{item['counterparty']}**: {item['friendly_script']}" for item in queue[:6]]
+        return "### WhatsApp Follow-ups\n" + "\n".join(lines)
+
+    if action == "Find risky rows":
+        risks = risk_flags(rows)
+        reviews = review_rows(rows)
+        lines = [f"- {risk}" for risk in risks]
+        lines.extend(f"- Row {item['source_row']}: {item['issue']}." for item in reviews[:5])
+        return "### Risk Scan\n" + ("\n".join(lines) if lines else "No obvious risks found.")
+
+    if action == "Prepare QuickBooks export":
+        lines = [
+            "- Map `income` rows to Sales Receipt or Invoice import.",
+            "- Map `expense` rows to Expense import.",
+            "- Use `counterparty` as Customer/Vendor.",
+            "- Use `category` as Account/Category.",
+            "- Use `item`, `amount`, `date`, and `payment_status` as transaction details.",
+            f"- Rows ready for review: **{len(rows)}**.",
+        ]
+        return "### QuickBooks Export Plan\n" + "\n".join(lines)
+
+    metrics = compute_metrics(rows)
+    return (
+        "### Cash Summary\n"
+        f"- Net cash: **{money(metrics['net_cash'], currency)}**\n"
+        f"- Cash in: **{money(metrics['paid_income'], currency)}**\n"
+        f"- Cash out: **{money(metrics['paid_expense'], currency)}**\n"
+        f"- Still due: **{money(metrics['due_income'], currency)}**"
+    )
+
+
 def risk_flags(rows: list[dict[str, Any]]) -> list[str]:
     metrics = compute_metrics(rows)
     currency = metrics["currency"]

@@ -20,6 +20,8 @@ from shop_ledger.insights import (
     build_timeline_markdown,
     build_tables,
     counterparty_memory_cards,
+    COMMAND_ACTIONS,
+    run_ledger_command,
     timeline_figure,
     timeline_rows,
 )
@@ -278,6 +280,18 @@ button.primary {
   align-items: end;
 }
 
+#command-panel {
+  border-left: 4px solid var(--ledger-gold);
+}
+
+#command-output {
+  min-height: 120px;
+  border: 1px solid rgba(157, 177, 154, 0.18);
+  border-radius: 8px;
+  background: rgba(6, 10, 15, 0.64);
+  padding: 12px;
+}
+
 .followup-card {
   background: rgba(8, 12, 18, 0.88);
   border: 1px solid var(--ledger-line);
@@ -418,6 +432,7 @@ button.primary {
 #review-panel,
 #daily-brief-panel,
 #ask-ledger-panel,
+#command-panel,
 #timeline-panel,
 #memory-panel,
 #insight-panel {
@@ -567,6 +582,20 @@ def build_demo(
                             """,
                             elem_id="ask-ledger-panel",
                         )
+                with gr.Row(elem_id="command-panel", elem_classes=["chat-panel"]):
+                    with gr.Column(scale=2):
+                        command_choice = gr.Dropdown(
+                            label="Ledger command",
+                            choices=COMMAND_ACTIONS,
+                            value=COMMAND_ACTIONS[0],
+                            interactive=True,
+                        )
+                        command_button = gr.Button("Run command", variant="secondary")
+                    with gr.Column(scale=5):
+                        command_output = gr.Markdown(
+                            "### Command Palette\nChoose a command to run against the current ledger.",
+                            elem_id="command-output",
+                        )
                 with gr.Row():
                     category_table = gr.Dataframe(
                         headers=["category", "total", "display"],
@@ -714,7 +743,12 @@ def build_demo(
             ],
         )
         clear_button.click(
-            fn=lambda: (*clear_ledger(), initial_ask_chat(), ""),
+            fn=lambda: (
+                *clear_ledger(),
+                "### Command Palette\nChoose a command to run against the current ledger.",
+                initial_ask_chat(),
+                "",
+            ),
             outputs=[
                 ledger,
                 summary,
@@ -746,6 +780,7 @@ def build_demo(
                 timeline_table,
                 memory,
                 memory_table,
+                command_output,
                 ask_chatbot,
                 ask_question,
             ],
@@ -780,6 +815,11 @@ def build_demo(
         ask_clear.click(
             fn=lambda: (initial_ask_chat(), ""),
             outputs=[ask_chatbot, ask_question],
+        )
+        command_button.click(
+            fn=run_command_palette,
+            inputs=[ledger_state, command_choice],
+            outputs=[command_output],
         )
 
     return demo
@@ -1149,3 +1189,7 @@ def ask_ledger_chat(
     next_history.append({"role": "user", "content": clean_question})
     next_history.append({"role": "assistant", "content": f"{answer}\n\nAnswer source: {model_used}"})
     return next_history, ""
+
+
+def run_command_palette(state: list[dict[str, Any]] | None, command: str) -> str:
+    return run_ledger_command(state or [], command)

@@ -13,6 +13,7 @@ from shop_ledger.insights import (
     followup_rows,
     review_rows,
     risk_flags,
+    run_ledger_command,
     timeline_figure,
     timeline_rows,
 )
@@ -147,6 +148,18 @@ class InsightTests(unittest.TestCase):
 
         self.assertIn("Counterparty Memory", markdown)
         self.assertIn("Nimal", markdown)
+
+    def test_run_ledger_command_shows_unpaid(self):
+        output = run_ledger_command(ROWS, "Show unpaid")
+
+        self.assertIn("Unpaid", output)
+        self.assertIn("Nimal", output)
+
+    def test_run_ledger_command_prepares_quickbooks_plan(self):
+        output = run_ledger_command(ROWS, "Prepare QuickBooks export")
+
+        self.assertIn("QuickBooks", output)
+        self.assertIn("Customer/Vendor", output)
 
 
 if __name__ == "__main__":

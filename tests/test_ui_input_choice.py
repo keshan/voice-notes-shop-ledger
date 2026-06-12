@@ -2,7 +2,15 @@ import unittest
 from tempfile import NamedTemporaryFile
 
 from shop_ledger.processor import extract_document_text, prepare_document_input
-from shop_ledger.ui import add_to_ledger, ask_ledger, ask_ledger_chat, choose_input, generate_daily_brief, initial_ask_chat
+from shop_ledger.ui import (
+    add_to_ledger,
+    ask_ledger,
+    ask_ledger_chat,
+    choose_input,
+    generate_daily_brief,
+    initial_ask_chat,
+    run_command_palette,
+)
 
 
 class InputChoiceTests(unittest.TestCase):
@@ -160,6 +168,13 @@ class InputChoiceTests(unittest.TestCase):
         self.assertEqual(history[-2]["role"], "user")
         self.assertEqual(history[-1]["role"], "assistant")
         self.assertIn("Nimal", history[-1]["content"])
+
+    def test_run_command_palette_uses_current_rows(self):
+        rows = [{"payment_status": "due", "counterparty": "Nimal", "amount": 7500, "currency": "LKR", "item": "tea"}]
+
+        output = run_command_palette(rows, "Show unpaid")
+
+        self.assertIn("Nimal", output)
 
 
 if __name__ == "__main__":
