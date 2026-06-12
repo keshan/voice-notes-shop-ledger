@@ -35,8 +35,19 @@ for a real person who keeps money notes in scraps, voice messages, or memory.
 - Generate a Gemma-powered "today's shop pulse" from the structured ledger rows.
 - Ask local ledger questions in a dedicated chat such as "Who owes me most?",
   "What should I follow up today?", and "Where did cash go?"
+- Ask the ledger by voice; local transcription turns a spoken question into a
+  grounded ledger answer.
+- Run a Ledger Command Palette for unpaid rows, WhatsApp follow-ups, risk scan,
+  cash summary, and QuickBooks-style export planning.
+- Compose charts from plain-language questions with a safe Gemma/local chart
+  selector.
+- Review People Memory cards for customers and suppliers, with due status,
+  usual category, and suggested next message.
+- Scan the Anomaly Lantern for high-value dues, missing amounts, repeat unpaid
+  parties, and low-confidence rows.
 - View a Shop Pulse Timeline that turns rows into a visual story of cash in,
   cash out, dues, and logged events.
+- Close the day with a Daily Closing Ritual checklist before export.
 - Review field intelligence: top category, most active party, biggest entry,
   watch-list risks, and a daily field note.
 - Use the automation queue to turn due items into follow-up actions, reminder

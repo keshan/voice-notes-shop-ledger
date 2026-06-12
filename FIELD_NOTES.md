@@ -34,7 +34,16 @@ The current version also adds a dashboard and automation queue:
   and the next follow-up from structured rows.
 - Ask My Ledger for natural questions such as who owes the most or where cash
   went, grounded in the structured rows.
+- Voice questions for Ask My Ledger, so the shopkeeper can speak a question
+  after entering the day’s notes.
+- A command palette for fast unpaid scans, WhatsApp follow-ups, risk checks,
+  cash summaries, and QuickBooks-style export planning.
+- People Memory cards that summarize trust, due balances, usual categories, and
+  the next message per customer or supplier.
+- Anomaly Lantern warnings for unusually large amounts, missing values,
+  high-value dues, repeat unpaid parties, and low-confidence rows.
 - A Shop Pulse Timeline that turns raw rows into the story of the day.
+- A Daily Closing Ritual that turns the ledger into an end-of-day checklist.
 - Category and counterparty breakdowns.
 - Risk flags for high-value dues and low-confidence extraction.
 - Ready-to-send follow-up scripts with suggested cadence and three tones:
@@ -63,11 +72,16 @@ when the schema is narrow and the UI keeps the workflow grounded.
 4. Open the dashboard and show due amount, the chosen graph, and risk flags.
 5. Generate the daily shop pulse and read the short practical summary.
 6. Ask "Who owes me most?" and show the answer.
-7. Open the Pulse Timeline and show cash in, cash out, and dues as story beats.
-8. Open the automation queue and pick the right tone for a follow-up script.
-9. Open the Review Desk and show that uncertainty becomes a clear correction
+7. Ask the same question by voice.
+8. Run the command palette for unpaid rows or QuickBooks export planning.
+9. Open People Memory and show a counterparty profile.
+10. Open Anomaly Lantern and show warnings before export.
+11. Open the Pulse Timeline and show cash in, cash out, and dues as story beats.
+12. Open the Closing Ritual and walk through the end-of-day checklist.
+13. Open the automation queue and pick the right tone for a follow-up script.
+14. Open the Review Desk and show that uncertainty becomes a clear correction
    task.
-10. Export CSV.
+15. Export CSV.
 
 ## Lessons
 

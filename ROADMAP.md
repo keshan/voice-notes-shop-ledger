@@ -113,6 +113,8 @@ of the day.
 
 ### 7. Counterparty Memory Cards
 
+Status: shipped in the memory-card enhancement sprint.
+
 Create small profiles for each person or supplier:
 
 - total paid
@@ -123,6 +125,9 @@ Create small profiles for each person or supplier:
 
 This is useful for small shops where trust and memory matter more than formal
 accounting.
+
+The app now includes People Memory cards and a counterparty table with trust
+pulse, due amount, usual category, last item, and suggested next message.
 
 ### 8. What Changed Since Yesterday?
 
@@ -161,6 +166,43 @@ Use simple local forecasting, not a big ML system:
 - category spend trend
 
 This adds value without leaving the small-model spirit.
+
+## Additional Shipped Ideas
+
+### Ledger Command Palette
+
+Status: shipped.
+
+The dashboard now has a command palette for unpaid rows, WhatsApp follow-ups,
+risk scans, cash summaries, and QuickBooks-style export planning.
+
+### AI Chart Composer
+
+Status: shipped.
+
+The chart wall now accepts plain-language chart questions. Modal production can
+ask Gemma to choose from safe chart specs; local mode uses deterministic rules.
+
+### Anomaly Lantern
+
+Status: shipped.
+
+The app now flags high-value dues, missing amounts, low-confidence rows,
+unusually large entries, and repeat unpaid parties.
+
+### Shopkeeper Voice Mode
+
+Status: shipped.
+
+Ask My Ledger now supports spoken questions using the same local transcription
+path as voice notes.
+
+### Daily Closing Ritual
+
+Status: shipped.
+
+The app now includes an end-of-day checklist and closing summary for cash,
+dues, review items, anomalies, and export readiness.
 
 ## Hackathon Merit Badge Opportunities
 

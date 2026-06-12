@@ -67,6 +67,9 @@ Dashboard, ledger table, automation queue, CSV export
    - daily shop-pulse brief
    - local ledger question answer
    - shop pulse timeline
+   - counterparty memory
+   - anomaly scan
+   - closing checklist
    - Plotly insight figures
    - automation queue
    - review queue
@@ -142,6 +145,11 @@ the reason.
 - chart plan selection
 - daily brief generation with Gemma or local fallback
 - Ask My Ledger answers from structured rows with Gemma or local fallback
+- voice questions for Ask My Ledger
+- command palette actions
+- counterparty memory cards
+- anomaly detection
+- daily closing checklist
 - timeline events and pulse chart
 - Plotly figures for due radar, spend pressure, cashflow, confidence review,
   category mix, and party exposure
@@ -172,13 +180,16 @@ Top area:
 Tabs:
 
 - `Dashboard`: KPIs, chart director, themed Plotly graph wall, field
-  intelligence, Gemma daily brief, full Ask My Ledger chat, category and party
-  breakdowns.
+  intelligence, Gemma daily brief, full Ask My Ledger chat, voice questions,
+  command palette, category and party breakdowns.
 - `Automation Queue`: follow-up actions, reminder cadence, and reply studio
   message variants.
 - `Review Desk`: low-confidence or incomplete rows with targeted correction
   questions.
 - `Pulse Timeline`: story cards, event chart, and timeline table.
+- `People Memory`: counterparty profiles and next-message suggestions.
+- `Anomaly Lantern`: high-signal warnings before export.
+- `Closing Ritual`: end-of-day checklist and closing summary.
 - `Ledger`: raw ledger rows and CSV export.
 
 ## Modal Production Path
