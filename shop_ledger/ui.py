@@ -10,6 +10,7 @@ import pandas as pd
 
 from shop_ledger.insights import (
     build_chart_markdown,
+    build_counterparty_memory_markdown,
     build_dashboard_markdown,
     build_daily_brief_markdown,
     build_insight_figures,
@@ -18,6 +19,7 @@ from shop_ledger.insights import (
     build_review_markdown,
     build_timeline_markdown,
     build_tables,
+    counterparty_memory_cards,
     timeline_figure,
     timeline_rows,
 )
@@ -339,6 +341,51 @@ button.primary {
   padding: 5px 7px;
 }
 
+.memory-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.memory-card {
+  background: rgba(8, 12, 18, 0.88);
+  border: 1px solid var(--ledger-line);
+  border-left: 4px solid var(--ledger-green);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.memory-card.watch {
+  border-left-color: var(--ledger-gold);
+}
+
+.memory-card.risk {
+  border-left-color: var(--ledger-red);
+}
+
+.memory-card strong,
+.memory-card span {
+  display: block;
+}
+
+.memory-card span {
+  color: var(--ledger-gold) !important;
+  font-size: 12px;
+  margin-top: 4px;
+  text-transform: uppercase;
+}
+
+.memory-card code {
+  display: block;
+  white-space: normal;
+  margin-top: 8px;
+  color: var(--ledger-green);
+  background: rgba(139, 220, 139, 0.08);
+  border: 1px solid rgba(139, 220, 139, 0.22);
+  border-radius: 6px;
+  padding: 8px;
+}
+
 .followup-card code {
   display: block;
   white-space: normal;
@@ -372,6 +419,7 @@ button.primary {
 #daily-brief-panel,
 #ask-ledger-panel,
 #timeline-panel,
+#memory-panel,
 #insight-panel {
   border: 1px solid var(--ledger-line);
   background: rgba(16, 21, 29, 0.86);
@@ -389,6 +437,10 @@ button.primary {
   }
 
   .reply-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .memory-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -580,6 +632,26 @@ def build_demo(
                     interactive=False,
                     wrap=True,
                 )
+            with gr.Tab("People Memory"):
+                memory = gr.Markdown(build_counterparty_memory_markdown([]), elem_id="memory-panel")
+                memory_table = gr.Dataframe(
+                    headers=[
+                        "party",
+                        "trust_pulse",
+                        "total_moved",
+                        "paid",
+                        "due",
+                        "usual_category",
+                        "usual_item",
+                        "last_item",
+                        "row_count",
+                        "next_message",
+                    ],
+                    datatype=["str", "str", "str", "str", "str", "str", "str", "str", "number", "str"],
+                    label="Counterparty memory",
+                    interactive=False,
+                    wrap=True,
+                )
             with gr.Tab("Ledger"):
                 ledger = gr.Dataframe(
                     headers=COLUMNS,
@@ -637,6 +709,8 @@ def build_demo(
                 timeline,
                 timeline_plot,
                 timeline_table,
+                memory,
+                memory_table,
             ],
         )
         clear_button.click(
@@ -670,6 +744,8 @@ def build_demo(
                 timeline,
                 timeline_plot,
                 timeline_table,
+                memory,
+                memory_table,
                 ask_chatbot,
                 ask_question,
             ],
@@ -982,6 +1058,22 @@ def render_intelligence(rows: list[dict[str, Any]]) -> tuple[Any, ...]:
                 "signed_amount",
                 "status",
                 "story",
+            ],
+        ),
+        build_counterparty_memory_markdown(rows),
+        pd.DataFrame(
+            counterparty_memory_cards(rows),
+            columns=[
+                "party",
+                "trust_pulse",
+                "total_moved",
+                "paid",
+                "due",
+                "usual_category",
+                "usual_item",
+                "last_item",
+                "row_count",
+                "next_message",
             ],
         ),
     )

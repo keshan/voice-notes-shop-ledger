@@ -3,10 +3,12 @@ import unittest
 from shop_ledger.insights import (
     answer_ledger_question,
     build_chart_plan,
+    build_counterparty_memory_markdown,
     build_daily_brief_markdown,
     build_insight_figures,
     build_timeline_markdown,
     compute_metrics,
+    counterparty_memory_cards,
     daily_brief_fallback,
     followup_rows,
     review_rows,
@@ -132,6 +134,19 @@ class InsightTests(unittest.TestCase):
 
         self.assertIn("Shop Pulse Timeline", markdown)
         self.assertTrue(hasattr(figure, "to_plotly_json"))
+
+    def test_counterparty_memory_cards_surface_due_profile(self):
+        cards = counterparty_memory_cards(ROWS)
+
+        self.assertEqual(cards[0]["party"], "Nimal")
+        self.assertEqual(cards[0]["trust_pulse"], "Collect first")
+        self.assertIn("Follow up", cards[0]["next_message"])
+
+    def test_counterparty_memory_markdown_renders_cards(self):
+        markdown = build_counterparty_memory_markdown(ROWS)
+
+        self.assertIn("Counterparty Memory", markdown)
+        self.assertIn("Nimal", markdown)
 
 
 if __name__ == "__main__":

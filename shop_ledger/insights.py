@@ -166,6 +166,85 @@ def party_breakdown(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     ]
 
 
+def counterparty_memory_cards(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    currency = primary_currency(rows)
+    profiles: dict[str, dict[str, Any]] = {}
+    for index, row in enumerate(rows, start=1):
+        party = str(row.get("counterparty") or "Unknown").strip() or "Unknown"
+        profile = profiles.setdefault(
+            party,
+            {
+                "party": party,
+                "total_moved": 0.0,
+                "paid": 0.0,
+                "due": 0.0,
+                "row_count": 0,
+                "last_row": index,
+                "last_item": "",
+                "categories": defaultdict(int),
+                "items": defaultdict(int),
+            },
+        )
+        value = amount(row)
+        profile["total_moved"] += value
+        profile["row_count"] += 1
+        profile["last_row"] = index
+        profile["last_item"] = row.get("item") or "ledger item"
+        profile["categories"][str(row.get("category") or "uncategorized")] += 1
+        profile["items"][str(row.get("item") or "ledger item")] += 1
+        if row.get("payment_status") == "due":
+            profile["due"] += value
+        elif row.get("payment_status") == "paid":
+            profile["paid"] += value
+
+    cards = []
+    for profile in profiles.values():
+        category = max(profile["categories"].items(), key=lambda item: item[1])[0] if profile["categories"] else "uncategorized"
+        usual_item = max(profile["items"].items(), key=lambda item: item[1])[0] if profile["items"] else "ledger item"
+        trust = "Clear" if profile["due"] == 0 else "Watch" if profile["due"] < 5000 else "Collect first"
+        next_message = (
+            f"Thank {profile['party']} and keep trading."
+            if profile["due"] == 0
+            else f"Follow up with {profile['party']} about {money(profile['due'], currency)} before the next sale."
+        )
+        cards.append(
+            {
+                "party": profile["party"],
+                "trust_pulse": trust,
+                "total_moved": money(profile["total_moved"], currency),
+                "paid": money(profile["paid"], currency),
+                "due": money(profile["due"], currency),
+                "usual_category": category,
+                "usual_item": usual_item,
+                "last_item": profile["last_item"],
+                "row_count": profile["row_count"],
+                "next_message": next_message,
+            }
+        )
+    return sorted(cards, key=lambda card: (card["trust_pulse"] != "Collect first", card["trust_pulse"] != "Watch", card["party"]))
+
+
+def build_counterparty_memory_markdown(rows: list[dict[str, Any]]) -> str:
+    cards = counterparty_memory_cards(rows)
+    if not cards:
+        return "### Counterparty Memory\nPeople and supplier memory cards appear after the first ledger entry."
+
+    blocks = ["### Counterparty Memory", "<div class='memory-grid'>"]
+    for card in cards[:9]:
+        tone = "risk" if card["trust_pulse"] == "Collect first" else "watch" if card["trust_pulse"] == "Watch" else "clear"
+        blocks.append(
+            f"<div class='memory-card {tone}'>"
+            f"<strong>{card['party']}</strong>"
+            f"<span>{card['trust_pulse']}</span>"
+            f"<p>{card['total_moved']} moved · {card['due']} due</p>"
+            f"<small>Usually: {card['usual_category']} / {card['usual_item']}</small>"
+            f"<code>{card['next_message']}</code>"
+            "</div>"
+        )
+    blocks.append("</div>")
+    return "\n".join(blocks)
+
+
 def review_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     review = []
     for index, row in enumerate(rows, start=1):
