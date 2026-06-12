@@ -47,10 +47,15 @@ class LlamaLedgerBackend:
         n_gpu_layers: int | None = None,
     ) -> None:
         self.model_path = model_path or os.getenv("LLAMA_GGUF_PATH", "")
+        self.model_label = os.getenv("LLAMA_MODEL_LABEL", "").strip() or self._default_model_label()
         self.n_ctx = n_ctx or int(os.getenv("LLAMA_N_CTX", "4096"))
         self.n_threads = n_threads or max(2, (os.cpu_count() or 4) - 1)
         self.n_gpu_layers = n_gpu_layers if n_gpu_layers is not None else int(os.getenv("LLAMA_N_GPU_LAYERS", "0"))
         self._llm: Any | None = None
+
+    def _default_model_label(self) -> str:
+        model_file = Path(self.model_path).name if self.model_path else "GGUF model"
+        return f"llama.cpp / {model_file}"
 
     @property
     def available(self) -> bool:
@@ -99,7 +104,7 @@ class LlamaLedgerBackend:
         text = response["choices"][0]["message"]["content"]
         data = parse_json_object(text)
         result = LedgerResult.model_validate(data)
-        result.model_used = Path(self.model_path).name
+        result.model_used = self.model_label
         return result
 
     def daily_brief(self, rows: list[dict[str, Any]], currency: str = "LKR") -> str:

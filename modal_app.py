@@ -10,6 +10,7 @@ MODEL_DIR = "/models"
 DEFAULT_MODEL_FILE = "model.gguf"
 DEFAULT_GGUF_REPO = "unsloth/gemma-4-12b-it-GGUF"
 DEFAULT_GGUF_FILE = "gemma-4-12b-it-UD-Q4_K_XL.gguf"
+MODEL_LABEL = f"{DEFAULT_GGUF_REPO} / {DEFAULT_GGUF_FILE} / llama.cpp"
 GPU_TYPE = "A10"
 
 app = modal.App(APP_NAME)
@@ -40,6 +41,7 @@ image = (
             "PYTHONPATH": "/root",
             "LEDGER_MODEL_MODE": "llama",
             "LLAMA_GGUF_PATH": f"{MODEL_DIR}/{DEFAULT_MODEL_FILE}",
+            "LLAMA_MODEL_LABEL": MODEL_LABEL,
             "LLAMA_N_GPU_LAYERS": "-1",
             "LLAMA_N_CTX": "2048",
             "WHISPER_MODEL_SIZE": "tiny",
@@ -131,7 +133,7 @@ def fastapi_app():
     from gradio.routes import mount_gradio_app
     from shop_ledger.ui import build_demo
 
-    web_app = FastAPI(title="Voice Notes to Shop Ledger")
+    web_app = FastAPI(title="Small Shop Ledger")
 
     def process_remote(note: str, currency: str, image_urls: list[str] | None = None) -> dict:
         return LedgerAgent().process.remote(note, currency, image_urls)

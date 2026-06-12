@@ -1,4 +1,4 @@
-"""Voice Notes to Shop Ledger."""
+"""Small Shop Ledger."""
 
 __all__ = ["__version__"]
 

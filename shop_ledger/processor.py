@@ -53,7 +53,7 @@ class LedgerProcessor:
             try:
                 brief = self.backend.daily_brief(rows, currency=currency)
                 if brief:
-                    return {"brief": brief, "model_used": Path(self.backend.model_path).name}
+                    return {"brief": brief, "model_used": self.backend.model_label}
             except Exception as exc:
                 return {
                     "brief": daily_brief_fallback(rows),
@@ -67,7 +67,7 @@ class LedgerProcessor:
             try:
                 answer = self.backend.answer_ledger_question(rows, question, currency=currency)
                 if answer:
-                    return {"answer": answer, "model_used": Path(self.backend.model_path).name}
+                    return {"answer": answer, "model_used": self.backend.model_label}
             except Exception as exc:
                 return {"answer": fallback, "model_used": f"local rules fallback ({type(exc).__name__})"}
         return {"answer": fallback, "model_used": "local rules"}
@@ -78,7 +78,7 @@ class LedgerProcessor:
             try:
                 spec = self.backend.choose_chart_spec(rows, question, CHART_SPECS)
                 if spec.get("chart") in CHART_SPECS:
-                    spec["model_used"] = Path(self.backend.model_path).name
+                    spec["model_used"] = self.backend.model_label
                     return spec
             except Exception as exc:
                 fallback["model_used"] = f"local rules fallback ({type(exc).__name__})"

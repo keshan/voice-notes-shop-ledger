@@ -1,8 +1,8 @@
 # Deployment And Modal Runbook
 
-This project runs as a Gradio web app on Modal. The UI is served by a lightweight
-ASGI web function, while llama.cpp inference runs in a separate GPU worker that
-keeps the GGUF model warm between requests.
+Small Shop Ledger runs as a Gradio web app on Modal. The UI is served by a
+lightweight ASGI web function, while llama.cpp inference runs in a separate GPU
+worker that keeps the GGUF model warm between requests.
 
 ## Production URLs
 
@@ -10,6 +10,9 @@ keeps the GGUF model warm between requests.
 - Modal app name: `voice-notes-shop-ledger`
 - Modal model volume: `voice-notes-shop-ledger-models`
 - GitHub repo: <https://github.com/keshan/voice-notes-shop-ledger>
+
+The Modal and GitHub slugs still use the original project identifier so the
+existing deployment URL and model volume remain stable.
 
 ## Modal Architecture
 
@@ -113,7 +116,7 @@ A healthy run should print a result shaped like:
 
 ```text
 {
-  "model_used": "model.gguf",
+  "model_used": "unsloth/gemma-4-12b-it-GGUF / gemma-4-12b-it-UD-Q4_K_XL.gguf / llama.cpp",
   "entry_count": 2,
   "amounts": [1200.0, 750.0],
   "questions": [],
@@ -136,7 +139,9 @@ modal app logs voice-notes-shop-ledger
 Useful signals:
 
 - `llama_context` lines mean llama.cpp loaded the GGUF.
-- `model_used: model.gguf` in smoke output means model extraction succeeded.
+- `model_used` showing `unsloth/gemma-4-12b-it-GGUF` means model extraction
+  succeeded and the UI is showing the human model label rather than the mounted
+  filename.
 - `heuristic fallback (missing GGUF model)` means the volume does not contain
   `/models/model.gguf`.
 - `heuristic fallback (ValidationError)` usually means the model returned JSON
@@ -173,6 +178,7 @@ On a laptop without GPU-compatible llama.cpp, keep `LLAMA_N_GPU_LAYERS=0`.
 | --- | --- | --- | --- |
 | `LEDGER_MODEL_MODE` | `LedgerProcessor` | `llama` | Selects `llama` or `mock` mode. |
 | `LLAMA_GGUF_PATH` | `LlamaLedgerBackend` | `/models/model.gguf` | Path to the model file. |
+| `LLAMA_MODEL_LABEL` | `LlamaLedgerBackend` | `unsloth/gemma-4-12b-it-GGUF / gemma-4-12b-it-UD-Q4_K_XL.gguf / llama.cpp` | Human-readable label shown in the UI and smoke tests. |
 | `LLAMA_N_GPU_LAYERS` | `LlamaLedgerBackend` | `-1` | Number of layers to offload to GPU. |
 | `LLAMA_N_CTX` | `LlamaLedgerBackend` | `2048` | llama.cpp context window. |
 | `WHISPER_MODEL_SIZE` | `transcribe_audio` | `tiny` | Local faster-whisper model size for voice notes. |
@@ -201,7 +207,7 @@ modal run modal_app.py::smoke
 
 Then check:
 
-- Is `model_used` equal to `model.gguf`?
+- Does `model_used` include `unsloth/gemma-4-12b-it-GGUF`?
 - Does `modal volume ls voice-notes-shop-ledger-models` show `model.gguf`?
 - Does the printed `questions` list include a schema or validation error?
 

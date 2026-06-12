@@ -1,4 +1,6 @@
-# Voice Notes to Shop Ledger
+# Small Shop Ledger
+
+Messy notes in. Clear books by closing time.
 
 A small-model Gradio app for turning messy shopkeeper notes into a clean ledger.
 
@@ -31,6 +33,8 @@ for a real person who keeps money notes in scraps, voice messages, or memory.
   sticky ledger assistant, Action Inbox, People workbench, and Ledger Archive.
 - Extract structured ledger rows with amount, party, item, category, status, and
   confidence.
+- See the actual Gemma/GGUF model label in the app instead of the internal
+  mounted filename.
 - See a live dashboard for net cash, cash in, cash out, due amount, follow-ups,
   and average extraction confidence.
 - Let the app pick an insight graph based on the ledger state: unpaid dues,
@@ -122,7 +126,7 @@ modal run modal_app.py::smoke
 Expected signal:
 
 ```text
-model_used: model.gguf
+model_used: unsloth/gemma-4-12b-it-GGUF / gemma-4-12b-it-UD-Q4_K_XL.gguf / llama.cpp
 gpu_type: A10
 ```
 
@@ -132,6 +136,7 @@ The app reads these environment variables:
 | --- | --- |
 | `LEDGER_MODEL_MODE` | `mock` or `llama` |
 | `LLAMA_GGUF_PATH` | Local path to a GGUF model |
+| `LLAMA_MODEL_LABEL` | Human-readable model label shown in the UI |
 | `LLAMA_N_GPU_LAYERS` | Number of llama.cpp layers to offload, `-1` on Modal |
 | `LLAMA_N_CTX` | llama.cpp context window, `2048` on Modal |
 | `WHISPER_MODEL_SIZE` | Optional faster-whisper model size, defaults to `tiny` |

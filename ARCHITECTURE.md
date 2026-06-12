@@ -1,6 +1,6 @@
 # Architecture
 
-Voice Notes to Shop Ledger is a small-model Gradio app that turns messy shop
+Small Shop Ledger is a small-model Gradio app that turns messy shop
 notes into structured ledger rows, insights, and follow-up actions.
 
 ## System Overview
@@ -57,7 +57,8 @@ Dashboard, ledger table, automation queue, CSV export
 6. In Modal production, `LedgerProcessor` uses `LlamaLedgerBackend`.
 7. `LlamaLedgerBackend` asks Gemma through llama.cpp to return strict JSON,
    using multimodal `image_url` message parts when document images are present.
-8. The result is validated by `LedgerResult` and `LedgerEntry`.
+8. The result is validated by `LedgerResult` and `LedgerEntry`, then tagged
+   with the readable `LLAMA_MODEL_LABEL` when llama.cpp was used.
 9. Rows are appended to Gradio state.
 10. The app recomputes:
    - ledger table
@@ -221,6 +222,7 @@ memory=32768
 timeout=1800
 LLAMA_N_GPU_LAYERS=-1
 LLAMA_N_CTX=2048
+LLAMA_MODEL_LABEL=unsloth/gemma-4-12b-it-GGUF / gemma-4-12b-it-UD-Q4_K_XL.gguf / llama.cpp
 ```
 
 ## Testing Strategy

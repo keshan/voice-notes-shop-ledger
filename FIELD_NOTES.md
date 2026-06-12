@@ -12,7 +12,9 @@ the daily friction of turning rough notes into something they can review later.
 
 ## What We Built
 
-Voice Notes to Shop Ledger turns a note like:
+Tagline: Messy notes in. Clear books by closing time.
+
+Small Shop Ledger turns a note like:
 
 ```text
 paid Ravi 1200 for rice bags, customer Nimal owes 750 for tea packets, remind me Friday
@@ -24,7 +26,7 @@ It also accepts receipts, bills, note photos, and PDFs. PDFs are rendered into
 page images locally, and Gemma reads the document visually through llama.cpp's
 multimodal chat input.
 
-The current version also adds a dashboard and automation queue:
+The current version is organized as a Shop OS Cockpit:
 
 - Net cash, cash in, cash out, due amount, open follow-ups, and average
   extraction confidence.
@@ -68,20 +70,18 @@ when the schema is narrow and the UI keeps the workflow grounded.
 
 1. Show the messy note or voice note.
 2. Click "Add to ledger".
-3. Show clean rows and totals.
-4. Open the dashboard and show due amount, the chosen graph, and risk flags.
-5. Generate the daily shop pulse and read the short practical summary.
-6. Ask "Who owes me most?" and show the answer.
-7. Ask the same question by voice.
-8. Run the command palette for unpaid rows or QuickBooks export planning.
-9. Open People Memory and show a counterparty profile.
-10. Open Anomaly Lantern and show warnings before export.
-11. Open the Pulse Timeline and show cash in, cash out, and dues as story beats.
-12. Open the Closing Ritual and walk through the end-of-day checklist.
-13. Open the automation queue and pick the right tone for a follow-up script.
-14. Open the Review Desk and show that uncertainty becomes a clear correction
-   task.
-15. Export CSV.
+3. Show the Shop Pulse center updating clean rows, totals, charts, and the
+   timeline without leaving the cockpit.
+4. Generate the daily shop pulse and read the short practical summary.
+5. Ask "Who owes me most?" and show the answer.
+6. Ask the same question by voice.
+7. Run the command palette for unpaid rows or QuickBooks export planning.
+8. Show the Action Inbox with follow-ups, review rows, and anomalies.
+9. Open People and show a counterparty profile.
+10. Open the Ledger Archive and show the raw table, closing checklist, and CSV
+   export.
+11. Point out the model badge showing the actual Gemma GGUF model label.
+12. Export CSV.
 
 ## Lessons
 

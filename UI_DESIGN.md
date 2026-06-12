@@ -1,8 +1,10 @@
 # UI Design And Layout System
 
-Voice Notes to Shop Ledger is organized as a small-shop operating cockpit, not a
+Small Shop Ledger is organized as a small-shop operating cockpit, not a
 generic Gradio demo. The layout is designed for a shopkeeper who wants to move
 from messy capture to concrete action without hunting through many equal tabs.
+
+Product tagline: Messy notes in. Clear books by closing time.
 
 ## Product Shape
 

@@ -112,10 +112,11 @@ class InsightTests(unittest.TestCase):
         self.assertIn("Nimal", brief)
 
     def test_daily_brief_markdown_wraps_model_name(self):
-        markdown = build_daily_brief_markdown(ROWS, "Cash is tight today.", "model.gguf")
+        model_label = "unsloth/gemma-4-12b-it-GGUF / gemma-4-12b-it-UD-Q4_K_XL.gguf / llama.cpp"
+        markdown = build_daily_brief_markdown(ROWS, "Cash is tight today.", model_label)
 
         self.assertIn("Today's Shop Pulse", markdown)
-        self.assertIn("model.gguf", markdown)
+        self.assertIn("unsloth/gemma-4-12b-it-GGUF", markdown)
 
     def test_answer_ledger_question_answers_dues(self):
         answer = answer_ledger_question(ROWS, "Who owes me most?")

@@ -134,6 +134,11 @@ CSS = """
   margin: 0;
 }
 
+#status-strip code {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 #cockpit-shell {
   display: grid !important;
   grid-template-columns: minmax(270px, 0.9fr) minmax(430px, 1.65fr) minmax(310px, 1fr);
@@ -633,15 +638,15 @@ def build_demo(
 
     with gr.Blocks(
         css=CSS,
-        title="Voice Notes to Shop Ledger",
+        title="Small Shop Ledger",
         theme=gr.themes.Soft(primary_hue="green", secondary_hue="amber", neutral_hue="slate"),
     ) as demo:
         ledger_state = gr.State([])
 
         gr.Markdown(
             """
-            # Voice Notes to Shop Ledger
-            A midnight ledger desk for turning rough shop notes into rows, totals, and follow-ups.
+            # Small Shop Ledger
+            Messy notes in. Clear books by closing time.
             """,
             elem_id="hero",
         )
